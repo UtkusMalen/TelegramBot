@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bcc19fa6-d29a-43e3-865a-33c8bb5d0b9c" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="2YUPMrxxyBJN7eRTD9bWme2iq4f" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "javascript.nodejs.core.library.configured.version": "20.8.0",
+    "javascript.nodejs.core.library.typings.version": "20.8.0",
+    "last_opened_file_path": "D:/TGBOTREP",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.new.ui",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\TelegramBot" />
+      <recent name="C:\Users\teame\WebstormProjects\TelegramBot" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.dev" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="bcc19fa6-d29a-43e3-865a-33c8bb5d0b9c" name="Changes" comment="" />
+      <created>1700577140079</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1700577140079</updated>
+      <workItem from="1700577141407" duration="2365000" />
+      <workItem from="1700579539873" duration="177000" />
+      <workItem from="1700579844400" duration="1365000" />
+      <workItem from="1700581232241" duration="270000" />
+      <workItem from="1700581520396" duration="213000" />
+      <workItem from="1700581830555" duration="1374000" />
+      <workItem from="1700583229256" duration="447000" />
+      <workItem from="1700583692008" duration="1219000" />
+      <workItem from="1700584931328" duration="412000" />
+      <workItem from="1700585355813" duration="492000" />
+      <workItem from="1700585863559" duration="7033000" />
+      <workItem from="1700667809106" duration="8107000" />
+      <workItem from="1700682053811" duration="4947000" />
+      <workItem from="1700757491788" duration="6096000" />
+      <workItem from="1700763797512" duration="10516000" />
+      <workItem from="1700774960762" duration="1501000" />
+      <workItem from="1700776481079" duration="435000" />
+      <workItem from="1700817967346" duration="10389000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
