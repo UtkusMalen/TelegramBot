@@ -20,6 +20,75 @@ bot.start((ctx) => {
 });
 bot.help((ctx) => ctx.reply(text.help))
 
+bot.command('list', async (ctx) => {
+    const {id} = ctx.from;
+    const fileName = `${id}.json`
+    const fileData = await fs.promises.readFile(fileName, 'utf-8');
+    const words = JSON.parse(fileData);
+    try {
+        await ctx.reply(`Список слов: \n${words.map((word) => `${word.word} - ${word.translation}`).join('\n')}`);
+    } catch (err) {
+        console.error(err);
+        await ctx.reply('Упс, кажется, что-то пошло не так');
+    }
+})
+
+bot.command('clear' , async (ctx) => {
+    const {id} = ctx.from;
+    const fileName = `${id}.json`
+    const fileData = await fs.promises.readFile(fileName, 'utf-8');
+    const words = JSON.parse(fileData);
+
+    try {
+        words.splice(0, words.length);
+        const updatedData = JSON.stringify(words, null, 2);
+        fs.writeFile(fileName, updatedData, (err) => {
+            if (err) {
+                console.error(err);
+            }
+        })
+        ctx.reply('Список слов успешно очищен')
+    } catch (err) {
+        console.error(err);
+        await ctx.reply('Упс, кажется, что-то пошло не так');
+    }
+})
+bot.command('delete' , async (ctx) => {
+    const {id} = ctx.from;
+    const fileName = `${id}.json`
+    const fileData = await fs.promises.readFile(fileName, 'utf-8');
+    const words = JSON.parse(fileData);
+    const userMessage = ctx.message.text.substring(8);
+    try {
+        const [word, translation] = userMessage.split('-');
+        const data = {word: word.trim(), translation: translation.trim(), count: 1};
+        let found = false;
+        for (i=0; i < words.length; i++ ) {
+            if (words[i].word === data.word && words[i].translation === data.translation) {
+                words.splice(i, 1);
+                found = true;
+                break;
+            }
+        }
+
+        if(found) {
+            const updatedData = JSON.stringify(words, null, 2);
+            fs.writeFile(fileName, updatedData, (err) => {
+                if (err) {
+                    console.error(err);
+                    ctx.reply('Упс, кажется, что-то пошло не так. Попробуйте снова');
+                    return;
+                }
+                ctx.reply('Слово удалено');
+            })
+        } else {
+            await ctx.reply('Такого слова не существует в списке, либо вы неправильно его ввели')
+        }
+    } catch (err) {
+        console.error(err);
+        await ctx.reply('Упс, кажется, что-то пошло не так');
+    }
+})
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
@@ -32,9 +101,10 @@ async function startQuiz(ctx) {
         const words = JSON.parse(fileData);
 
         const randomWord = words[Math.floor(Math.random() * words.length)];
-        const translations = words.map((word) => word.translation);
-        const shuffledTranslations = shuffleArray(translations);
+        const translations = Array.from(new Set(words.map((word) => word.translation)));
         const correctTranslation = randomWord.translation;
+        const translationsFilter = translations.filter((translation) => translation !== correctTranslation);
+        const shuffledTranslations = shuffleArray(translationsFilter);
 
         const buttons = shuffledTranslations.slice(0, 3).map((translation) => {
             const isCorrect = translation === correctTranslation;
@@ -109,18 +179,18 @@ bot.on('message', async (ctx) => {
             for(let i = 0; i < words.length; i++) {
                 if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
                     wordFound = true;
-                    ctx.reply(`Слово ${word} уже существует в списке`);
+                    await ctx.reply(`Слово ${word} уже существует в списке`);
                     break;
                 }
             }
             if(!wordFound) {
                 words.push(data);
                 await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                ctx.reply(`Слово ${word} было добавлено в список`);
+                await ctx.reply(`Слово ${word} было добавлено в список`);
             }
         } catch (err) {
             console.error(err);
-            ctx.reply("Упс, кажется, что-то пошло не так")
+            await ctx.reply("Упс, кажется, что-то пошло не так")
         }
     }
 });
