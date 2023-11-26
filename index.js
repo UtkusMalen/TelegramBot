@@ -92,7 +92,7 @@ bot.command('delete' , async (ctx) => {
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
-
+let lastWord = null;
 async function startQuiz(ctx) {
     const { id } = ctx.from;
     const fileName = `${id}.json`;
@@ -100,7 +100,11 @@ async function startQuiz(ctx) {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         const words = JSON.parse(fileData);
 
-        const randomWord = words[Math.floor(Math.random() * words.length)];
+        let randomWord = getRandomWord(words);
+        while (randomWord.word === lastWord) {
+            randomWord = getRandomWord(words);
+        }
+        lastWord = randomWord.word;
         const translations = Array.from(new Set(words.map((word) => word.translation)));
         const correctTranslation = randomWord.translation;
         const translationsFilter = translations.filter((translation) => translation !== correctTranslation);
@@ -108,10 +112,10 @@ async function startQuiz(ctx) {
 
         const buttons = shuffledTranslations.slice(0, 3).map((translation) => {
             const isCorrect = translation === correctTranslation;
-
             return Markup.callbackButton(translation, isCorrect.toString());
         });
         buttons.push(Markup.callbackButton(correctTranslation, 'true'));
+        shuffleArray(buttons)
 
         await ctx.reply(`Выберите перевод слова ${randomWord.word}`, {
             reply_markup: Markup.inlineKeyboard(buttons, { columns: 2 }),
@@ -120,6 +124,11 @@ async function startQuiz(ctx) {
         console.error(error);
         ctx.reply('Упс, кажется, что-то пошло не так');
     }
+}
+
+function getRandomWord(words) {
+    const randomIndex = Math.floor(Math.random() * words.length);
+    return words[randomIndex];
 }
 
 bot.action('false', async (ctx) => {
