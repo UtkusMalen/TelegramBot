@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bcc19fa6-d29a-43e3-865a-33c8bb5d0b9c" name="Changes" comment="Telegram bot for learning words" />
+    <list default="true" id="bcc19fa6-d29a-43e3-865a-33c8bb5d0b9c" name="Changes" comment="Telegram bot for learning words">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -108,7 +111,7 @@
       <workItem from="1700863943678" duration="113000" />
       <workItem from="1700936628234" duration="9431000" />
       <workItem from="1700947741602" duration="306000" />
-      <workItem from="1700992885360" duration="617000" />
+      <workItem from="1700992885360" duration="857000" />
     </task>
     <task id="LOCAL-00001" summary="Telegram bot for learning words">
       <option name="closed" value="true" />
@@ -150,7 +153,23 @@
       <option name="project" value="LOCAL" />
       <updated>1700993230416</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1700993525434</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1700993525434</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1700993536979</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1700993536979</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
