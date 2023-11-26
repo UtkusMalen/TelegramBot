@@ -47,7 +47,7 @@ bot.command('clear' , async (ctx) => {
                 console.error(err);
             }
         })
-        ctx.reply('Список слов успешно очищен')
+        await ctx.reply('Список слов успешно очищен')
     } catch (err) {
         console.error(err);
         await ctx.reply('Упс, кажется, что-то пошло не так');
