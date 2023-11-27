@@ -94,6 +94,7 @@ bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
 let lastWord = null
+let lastWords = [];
 async function startQuiz(ctx) {
     const { id } = ctx.from;
     const fileName = `${id}.json`;
@@ -102,14 +103,18 @@ async function startQuiz(ctx) {
         const words = JSON.parse(fileData);
 
         let randomWord = getRandomWord(words);
-        while (randomWord.word === lastWord) {
+        while (lastWords.includes(randomWord.word)) {
             randomWord = getRandomWord(words);
         }
-        lastWord = randomWord.word;
+        lastWords.push(randomWord.word);
+        if(lastWords.length > words.length / 2) {
+            lastWords.shift();
+        }
         const translations = Array.from(new Set(words.map((word) => word.translation)));
         const correctTranslation = randomWord.translation;
         const translationsFilter = translations.filter((translation) => translation !== correctTranslation);
         const shuffledTranslations = shuffleArray(translationsFilter);
+
 
         const buttons = shuffledTranslations.slice(0, 3).map((translation) => {
             const isCorrect = translation === correctTranslation;
@@ -124,7 +129,7 @@ async function startQuiz(ctx) {
         });
     } catch (error) {
         console.error(error);
-        ctx.reply('Упс, кажется, что-то пошло не так');
+        ctx.reply('Кажется, список слов пуст');
     }
 }
 
@@ -140,16 +145,48 @@ bot.action('true', async (ctx) => {
 });
 
 async function checkAnswer(ctx, isCorrect) {
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
+    const fileData = await fs.promises.readFile(fileName, 'utf-8');
+    words = JSON.parse(fileData);
     try {
 
         if (isCorrect) {
-            await ctx.answerCbQuery();
-            await ctx.reply(`Правильно!`);
+            await handleCorrectAnswer(ctx, words);
         } else {
-            await ctx.answerCbQuery();
-            await ctx.reply('Ой, кажется, вы выбрали неправильный перевод!');
+            await handleIncorrectAnswer(ctx);
         }
-        await startQuiz(ctx);
+
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setTimeout(async () => {
+            lastWord = null;
+            await startQuiz(ctx);
+        },50);
+    }
+}
+async function handleCorrectAnswer(ctx,words) {
+    try {
+        await ctx.answerCbQuery();
+        await ctx.reply(`Правильно!`);
+
+        const wordIndex = words.findIndex(word => word.word === lastWord);
+        if(wordIndex !== -1) {
+            words[wordIndex].count = (words[wordIndex].count || 0) + 1;
+            const {id} = ctx.from;
+            const fileName = `${id}.json`;
+            await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function handleIncorrectAnswer(ctx) {
+    try {
+        await ctx.answerCbQuery();
+        ctx.reply('Ой, кажется, вы выбрали неправильный перевод!');
     } catch (err) {
         console.error(err);
     }
