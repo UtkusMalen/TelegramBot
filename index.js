@@ -48,7 +48,7 @@ bot.command('clear' , async (ctx) => {
                 console.error(err);
             }
         })
-        ctx.reply('Список слов успешно очищен')
+        await ctx.reply('Список слов успешно очищен')
     } catch (err) {
         console.error(err);
         await ctx.reply('Упс, кажется, что-то пошло не так');
@@ -90,11 +90,10 @@ bot.command('delete' , async (ctx) => {
         await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 })
+let lastWord = null;
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
-let lastWord = null
-let lastWords = [];
 async function startQuiz(ctx) {
     const { id } = ctx.from;
     const fileName = `${id}.json`;
@@ -103,13 +102,10 @@ async function startQuiz(ctx) {
         const words = JSON.parse(fileData);
 
         let randomWord = getRandomWord(words);
-        while (lastWords.includes(randomWord.word)) {
+        while (lastWord === randomWord.word) {
             randomWord = getRandomWord(words);
         }
-        lastWords.push(randomWord.word);
-        if(lastWords.length > words.length / 2) {
-            lastWords.shift();
-        }
+        lastWord = randomWord.word
         const translations = Array.from(new Set(words.map((word) => word.translation)));
         const correctTranslation = randomWord.translation;
         const translationsFilter = translations.filter((translation) => translation !== correctTranslation);
@@ -123,7 +119,6 @@ async function startQuiz(ctx) {
         });
         buttons.push(Markup.callbackButton(correctTranslation, 'true'));
         shuffleArray(buttons);
-
         await ctx.reply(`Выберите перевод слова ${randomWord.word}`, {
             reply_markup: Markup.inlineKeyboard(buttons, { columns: 2 }),
         });
@@ -148,7 +143,7 @@ async function checkAnswer(ctx, isCorrect) {
     const { id } = ctx.from;
     const fileName = `${id}.json`;
     const fileData = await fs.promises.readFile(fileName, 'utf-8');
-    words = JSON.parse(fileData);
+    let words = JSON.parse(fileData);
     try {
 
         if (isCorrect) {
@@ -163,7 +158,7 @@ async function checkAnswer(ctx, isCorrect) {
         setTimeout(async () => {
             lastWord = null;
             await startQuiz(ctx);
-        },50);
+        },10);
     }
 }
 async function handleCorrectAnswer(ctx,words) {
@@ -171,11 +166,13 @@ async function handleCorrectAnswer(ctx,words) {
         await ctx.answerCbQuery();
         await ctx.reply(`Правильно!`);
 
+        const {id} = ctx.from;
+        const fileName = `${id}.json`;
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        words = JSON.parse(fileData)
         const wordIndex = words.findIndex(word => word.word === lastWord);
         if(wordIndex !== -1) {
             words[wordIndex].count = (words[wordIndex].count || 0) + 1;
-            const {id} = ctx.from;
-            const fileName = `${id}.json`;
             await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
         }
     } catch (err) {
@@ -208,6 +205,7 @@ function shuffleArray(array) {
 
     return array;
 }
+
 
 bot.on('message', async (ctx) => {
     const { id } = ctx.from;
