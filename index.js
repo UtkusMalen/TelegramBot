@@ -99,27 +99,34 @@ async function startQuiz(ctx) {
     try {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         let words = JSON.parse(fileData);
-
-        const randomWord = getRandomWord(words);
-        const translations = Array.from(new Set(words.map((word) => word.translation)));
-        const correctTranslation = randomWord.translation;
-        const translationsFilter = translations.filter((translation) => translation !== correctTranslation);
-        const shuffledTranslations = shuffleArray(translationsFilter);
+        const randomChance = Math.random();
+        let randomWord, options, isGuessTranslation = false
+        if(randomChance < 0.5) {
+            randomWord = getRandomWord(words);
+            isGuessTranslation = false;
+        } else {
+            isGuessTranslation = true;
+            randomWord = getRandomWord(words);
+        }
+        const correctAnswer = isGuessTranslation ? randomWord.word : randomWord.translation;
+        const allOptions = words.map((word) => (isGuessTranslation ? word.word : word.translation));
+        const otherOptions = allOptions.filter((option) => option !== correctAnswer);
+        const shuffledOptions = shuffleArray(otherOptions);
         for(let i = 0; i < words.length; i++) {
-            if(words[i].word === randomWord.word && words[i].translation === correctTranslation) {
+            if(words[i].word === randomWord.word && words[i].translation === correctAnswer) {
                 words[i].count++;
                 break;
             }
         }
         await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-        const buttons = shuffledTranslations.slice(0, 3).map((translation) => {
-            const isCorrect = translation === correctTranslation;
-
-            return Markup.callbackButton(translation, isCorrect.toString());
+        const buttons = shuffledOptions.slice(0, 3).map((option) => {
+            const isCorrect = option === correctAnswer;
+            return Markup.callbackButton(option, isCorrect.toString());
         });
-        buttons.push(Markup.callbackButton(correctTranslation, 'true'));
+        buttons.push(Markup.callbackButton(correctAnswer, 'true'));
         shuffleArray(buttons);
-        await ctx.reply(`Выберите перевод слова ${randomWord.word}`, {
+        const questionType = isGuessTranslation ? 'слово:' : 'перевод слова:';
+        await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
             reply_markup: Markup.inlineKeyboard(buttons, { columns: 2 }),
         });
     } catch (error) {
