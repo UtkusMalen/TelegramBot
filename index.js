@@ -9,7 +9,7 @@ bot.start((ctx) => {
     const fileName = `${id}.json`;
     fs.access(fileName, fs.constants.F_OK, (err) => {
         if (err) {
-            fs.writeFile(fileName, JSON.stringify([], null, 2), (err) => {
+            fs.writeFile(fileName, JSON.stringify([], null), (err) => {
                 if (err) {
                     console.error(err);
                 }
@@ -90,7 +90,6 @@ bot.command('delete' , async (ctx) => {
         await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 })
-let lastWord = null;
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
@@ -101,17 +100,18 @@ async function startQuiz(ctx) {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         const words = JSON.parse(fileData);
 
-        let randomWord = getRandomWord(words);
-        while (lastWord === randomWord.word) {
-            randomWord = getRandomWord(words);
-        }
-        lastWord = randomWord.word
+        const randomWord = getRandomWord(words);
         const translations = Array.from(new Set(words.map((word) => word.translation)));
         const correctTranslation = randomWord.translation;
         const translationsFilter = translations.filter((translation) => translation !== correctTranslation);
         const shuffledTranslations = shuffleArray(translationsFilter);
-
-
+        for(let i = 0; i < words.length; i++) {
+            if(words[i].word === randomWord.word && words[i].translation === correctTranslation) {
+                words[i].count++;
+                break;
+            }
+        }
+        await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
         const buttons = shuffledTranslations.slice(0, 3).map((translation) => {
             const isCorrect = translation === correctTranslation;
 
@@ -140,14 +140,10 @@ bot.action('true', async (ctx) => {
 });
 
 async function checkAnswer(ctx, isCorrect) {
-    const { id } = ctx.from;
-    const fileName = `${id}.json`;
-    const fileData = await fs.promises.readFile(fileName, 'utf-8');
-    let words = JSON.parse(fileData);
     try {
 
         if (isCorrect) {
-            await handleCorrectAnswer(ctx, words);
+            await handleCorrectAnswer(ctx);
         } else {
             await handleIncorrectAnswer(ctx);
         }
@@ -156,28 +152,14 @@ async function checkAnswer(ctx, isCorrect) {
         console.error(err);
     } finally {
         setTimeout(async () => {
-            lastWord = null;
+            ctx.state.lastWord = null;
             await startQuiz(ctx);
         },10);
     }
 }
-async function handleCorrectAnswer(ctx,words) {
-    try {
+async function handleCorrectAnswer(ctx) {
         await ctx.answerCbQuery();
         await ctx.reply(`Правильно!`);
-
-        const {id} = ctx.from;
-        const fileName = `${id}.json`;
-        const fileData = await fs.promises.readFile(fileName, 'utf-8');
-        words = JSON.parse(fileData)
-        const wordIndex = words.findIndex(word => word.word === lastWord);
-        if(wordIndex !== -1) {
-            words[wordIndex].count = (words[wordIndex].count || 0) + 1;
-            await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-        }
-    } catch (err) {
-        console.error(err);
-    }
 }
 
 async function handleIncorrectAnswer(ctx) {
@@ -205,8 +187,6 @@ function shuffleArray(array) {
 
     return array;
 }
-
-
 bot.on('message', async (ctx) => {
     const { id } = ctx.from;
     const fileName = `${id}.json`;

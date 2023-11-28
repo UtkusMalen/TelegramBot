@@ -119,7 +119,10 @@
       <workItem from="1701034749598" duration="3086000" />
       <workItem from="1701095027512" duration="1071000" />
       <workItem from="1701096148430" duration="323000" />
-      <workItem from="1701097877775" duration="4084000" />
+      <workItem from="1701097877775" duration="10252000" />
+      <workItem from="1701116300970" duration="7189000" />
+      <workItem from="1701169176976" duration="798000" />
+      <workItem from="1701169993358" duration="17300000" />
     </task>
     <task id="LOCAL-00001" summary="Telegram bot for learning words">
       <option name="closed" value="true" />
@@ -201,7 +204,23 @@
       <option name="project" value="LOCAL" />
       <updated>1701037755472</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701102253006</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1701102253006</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701118228449</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1701118228449</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
