@@ -1,4 +1,4 @@
-const { Telegraf, Markup } = require('telegraf');
+const { Telegraf, Markup, session} = require('telegraf');
 require('dotenv').config()
 const fs = require('fs')
 const text = require('./const')
@@ -18,7 +18,6 @@ bot.start((ctx) => {
     });
     ctx.reply(`👋 Привет, ${ctx.from.first_name} ! Напиши команду /help чтобы узнать, как работает бот`);
 });
-
 bot.help((ctx) => ctx.reply(text.help))
 
 bot.command('list', async (ctx) => {
@@ -90,6 +89,7 @@ bot.command('delete' , async (ctx) => {
         await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 })
+bot.use(session());
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
@@ -98,7 +98,7 @@ async function startQuiz(ctx) {
     const fileName = `${id}.json`;
     try {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
-        const words = JSON.parse(fileData);
+        let words = JSON.parse(fileData);
 
         const randomWord = getRandomWord(words);
         const translations = Array.from(new Set(words.map((word) => word.translation)));
@@ -129,7 +129,15 @@ async function startQuiz(ctx) {
 }
 
 function getRandomWord(words) {
-    return words[Math.floor(Math.random() * words.length)];
+    const randomChance = Math.random();
+    if(randomChance < 0.67) {
+        return words[Math.floor(Math.random() * words.length)];
+    } else {
+        words.sort((a, b) => a.count - b.count);
+        const minCount = words[0].count;
+        const wordsWithMinCount = words.filter((word) => word.count === minCount);
+        return wordsWithMinCount[Math.floor(Math.random() * wordsWithMinCount.length)];
+    }
 }
 bot.action('false', async (ctx) => {
     await checkAnswer(ctx, false);
@@ -152,9 +160,8 @@ async function checkAnswer(ctx, isCorrect) {
         console.error(err);
     } finally {
         setTimeout(async () => {
-            ctx.state.lastWord = null;
             await startQuiz(ctx);
-        },10);
+        },500);
     }
 }
 async function handleCorrectAnswer(ctx) {
