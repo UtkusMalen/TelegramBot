@@ -26,7 +26,7 @@ bot.command('list', async (ctx) => {
     const fileData = await fs.promises.readFile(fileName, 'utf-8');
     const words = JSON.parse(fileData);
     try {
-        await ctx.reply(`Список слов: \n${words.map((word) => `${word.word} - ${word.translation}`).join('\n')}`);
+        await ctx.reply(`Количество добавленных слов: ${words.length}\nСписок слов: \n${words.map((word) => `${word.word} - ${word.translation}`).join('\n')}`);
     } catch (err) {
         console.error(err);
         await ctx.reply('Упс, кажется, что-то пошло не так');
@@ -115,10 +115,17 @@ async function startQuiz(ctx) {
             isGuessTranslation = true;
             randomWord = getRandomWord(words);
         }
-        const correctAnswer = isGuessTranslation ? randomWord.word : randomWord.translation;
+        const correctWords = words.filter(word => {
+            return isGuessTranslation ? word.translation === randomWord.translation : word.word === randomWord.word;
+        });
+
+        const correctAnswer = correctWords.map(word => isGuessTranslation ? word.word : word.translation)[0];
         const allOptions = words.map((word) => (isGuessTranslation ? word.word : word.translation));
-        const otherOptions = allOptions.filter((option) => option !== correctAnswer);
-        const shuffledOptions = shuffleArray(otherOptions);
+        const otherOptions = allOptions.filter((option) => {
+            const isCorrectGuess = correctWords.some(word => option === (isGuessTranslation ? word.word : word.translation));
+            return !isCorrectGuess;
+        });
+        const shuffledOptions = shuffleArray(otherOptions).slice(0, 3);
         for(let i = 0; i < words.length; i++) {
             if(words[i].word === randomWord.word && words[i].translation === correctAnswer) {
                 words[i].count++;
@@ -126,11 +133,14 @@ async function startQuiz(ctx) {
             }
         }
         await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-        const buttons = shuffledOptions.slice(0, 3).map((option) => {
-            const isCorrect = option === correctAnswer;
+        const buttons = shuffledOptions.map((option) => {
+            const isCorrect = correctWords.some(word => option === (isGuessTranslation ? word.word : word.translation));
             return Markup.callbackButton(option, isCorrect.toString());
         });
-        buttons.push(Markup.callbackButton(correctAnswer, 'true'));
+        correctWords.forEach(word => {
+            const correctAnswer = isGuessTranslation ? word.word : word.translation;
+            buttons.push(Markup.callbackButton(correctAnswer, 'true'));
+        });
         shuffleArray(buttons);
         const questionType = isGuessTranslation ? 'слово:' : 'перевод слова:';
         await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
@@ -173,9 +183,15 @@ bot.on('message', async (ctx) => {
         }
     } else {
         if(ctx.session.wordToGuess) {
-            const wordToGuess = ctx.session.wordToGuess;
+            const fileData = await fs.promises.readFile(fileName, 'utf-8');
+            const words = JSON.parse(fileData);
+            const userWord = userMessage.trim().toLowerCase();
 
-            if(userMessage.trim().toLowerCase() === wordToGuess.trim().toLowerCase()) {
+            const isCorrect = words.some(word => {
+                return word.word.trim().toLowerCase() === userWord;
+            });
+
+            if (isCorrect) {
                 await handleCorrectAnswer(ctx);
             } else {
                 await handleIncorrectAnswer(ctx);
