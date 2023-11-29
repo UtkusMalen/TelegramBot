@@ -100,10 +100,17 @@ async function startQuiz(ctx) {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         let words = JSON.parse(fileData);
         const randomChance = Math.random();
-        let randomWord, options, isGuessTranslation = false
-        if(randomChance < 0.5) {
+        let randomWord, isGuessTranslation = false
+        if(randomChance < 0.3) {
             randomWord = getRandomWord(words);
+            await ctx.reply(`Введите перевод слова: ${randomWord.translation}`, {
+                reply_markup: {force_reply: true}
+            });
+            ctx.session.wordToGuess = randomWord.word;
+            return;
+        } else if(randomChance < 0.6) {
             isGuessTranslation = false;
+            randomWord = getRandomWord(words);
         } else {
             isGuessTranslation = true;
             randomWord = getRandomWord(words);
@@ -134,6 +141,52 @@ async function startQuiz(ctx) {
         ctx.reply('Кажется, список слов пуст');
     }
 }
+
+bot.on('message', async (ctx) => {
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
+    const userMessage = ctx.message.text;
+    if (userMessage.includes("-")) {
+        const [word, translation] = userMessage.split('-');
+        const data = { word: word.trim(), translation: translation.trim(), count: 1 };
+
+        try {
+            const fileData = await fs.promises.readFile(fileName, 'utf-8');
+            const words = JSON.parse(fileData);
+            let wordFound = false;
+
+            for(let i = 0; i < words.length; i++) {
+                if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
+                    wordFound = true;
+                    await ctx.reply(`Слово ${word} уже существует в списке`);
+                    break;
+                }
+            }
+            if(!wordFound) {
+                words.push(data);
+                await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                await ctx.reply(`Слово ${word} было добавлено в список`);
+            }
+        } catch (err) {
+            console.error(err);
+            await ctx.reply("Упс, кажется, что-то пошло не так")
+        }
+    } else {
+        if(ctx.session.wordToGuess) {
+            const wordToGuess = ctx.session.wordToGuess;
+
+            if(userMessage.trim().toLowerCase() === wordToGuess.trim().toLowerCase()) {
+                await handleCorrectAnswer(ctx);
+            } else {
+                await handleIncorrectAnswer(ctx);
+            }
+            delete ctx.session.wordToGuess;
+            setTimeout(async () => {
+                await startQuiz(ctx);
+            }, 500);
+        }
+    }
+});
 
 function getRandomWord(words) {
     const randomChance = Math.random();
@@ -172,14 +225,16 @@ async function checkAnswer(ctx, isCorrect) {
     }
 }
 async function handleCorrectAnswer(ctx) {
-        await ctx.answerCbQuery();
+    try {
         await ctx.reply(`Правильно!`);
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 async function handleIncorrectAnswer(ctx) {
     try {
-        await ctx.answerCbQuery();
-        ctx.reply('Ой, кажется, вы выбрали неправильный перевод!');
+        ctx.reply('Ой, неправильно!');
     } catch (err) {
         console.error(err);
     }
@@ -201,39 +256,6 @@ function shuffleArray(array) {
 
     return array;
 }
-bot.on('message', async (ctx) => {
-    const { id } = ctx.from;
-    const fileName = `${id}.json`;
-    const userMessage = ctx.message.text;
-    if (userMessage.includes("-")) {
-        const [word, translation] = userMessage.split('-');
-        const data = { word: word.trim(), translation: translation.trim(), count: 1 };
-
-        try {
-            const fileData = await fs.promises.readFile(fileName, 'utf-8');
-            const words = JSON.parse(fileData);
-            let wordFound = false;
-
-            for(let i = 0; i < words.length; i++) {
-                if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
-                    wordFound = true;
-                    await ctx.reply(`Слово ${word} уже существует в списке`);
-                    break;
-                }
-            }
-            if(!wordFound) {
-                words.push(data);
-                await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                await ctx.reply(`Слово ${word} было добавлено в список`);
-            }
-        } catch (err) {
-            console.error(err);
-            await ctx.reply("Упс, кажется, что-то пошло не так")
-        }
-    }
-});
-
-
 
 
 bot.launch()
