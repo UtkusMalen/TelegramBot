@@ -18,20 +18,61 @@ bot.start((ctx) => {
     });
     ctx.reply(`👋 Привет, ${ctx.from.first_name} ! Напиши команду /help чтобы узнать, как работает бот`);
 });
+bot.use(session());
 bot.help((ctx) => ctx.reply(text.help))
-
+const ITEMS_PER_PAGE = 10;
 bot.command('list', async (ctx) => {
-    const {id} = ctx.from;
-    const fileName = `${id}.json`
-    const fileData = await fs.promises.readFile(fileName, 'utf-8');
-    const words = JSON.parse(fileData);
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
+
     try {
-        await ctx.reply(`Количество добавленных слов: ${words.length}\nСписок слов: \n${words.map((word) => `${word.word} - ${word.translation}`).join('\n')}`);
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        const words = JSON.parse(fileData);
+
+        if (words.length === 0) {
+            await ctx.reply('Список слов пуст');
+            return;
+        }
+
+        ctx.session.currentPage = 1;
+        await sendPage(ctx, words);
+
     } catch (err) {
         console.error(err);
         await ctx.reply('Упс, кажется, что-то пошло не так');
     }
-})
+});
+
+bot.on('callback_query', async (ctx) => {
+    const data = ctx.update.callback_query.data;
+
+    if (data === 'next' || data === 'prev') {
+        const { id } = ctx.from;
+        const fileName = `${id}.json`;
+
+        try {
+            const fileData = await fs.promises.readFile(fileName, 'utf-8');
+            const words = JSON.parse(fileData);
+
+            if (words.length === 0) {
+                await ctx.reply('Список слов пуст');
+                return;
+            }
+
+            if (data === 'next' && words.length > (ctx.session.currentPage * ITEMS_PER_PAGE)) {
+                ctx.session.currentPage++;
+            } else if (data === 'prev' && ctx.session.currentPage > 1) {
+                ctx.session.currentPage--;
+            }
+
+            await sendPage(ctx, words);
+
+        } catch (err) {
+            console.error(err);
+            await ctx.reply('Упс, кажется, что-то пошло не так');
+        }
+    }
+});
 
 bot.command('clear' , async (ctx) => {
     const {id} = ctx.from;
@@ -89,7 +130,6 @@ bot.command('delete' , async (ctx) => {
         await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 })
-bot.use(session());
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
@@ -153,26 +193,26 @@ async function startQuiz(ctx) {
 }
 
 bot.on('message', async (ctx) => {
-    const { id } = ctx.from;
+    const {id} = ctx.from;
     const fileName = `${id}.json`;
     const userMessage = ctx.message.text;
     if (userMessage.includes("-")) {
         const [word, translation] = userMessage.split('-');
-        const data = { word: word.trim(), translation: translation.trim(), count: 1 };
+        const data = {word: word.trim(), translation: translation.trim(), count: 1};
 
         try {
             const fileData = await fs.promises.readFile(fileName, 'utf-8');
             const words = JSON.parse(fileData);
             let wordFound = false;
 
-            for(let i = 0; i < words.length; i++) {
+            for (let i = 0; i < words.length; i++) {
                 if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
                     wordFound = true;
                     await ctx.reply(`Слово ${word} уже существует в списке`);
                     break;
                 }
             }
-            if(!wordFound) {
+            if (!wordFound) {
                 words.push(data);
                 await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
                 await ctx.reply(`Слово ${word} было добавлено в список`);
@@ -182,25 +222,37 @@ bot.on('message', async (ctx) => {
             await ctx.reply("Упс, кажется, что-то пошло не так")
         }
     } else {
-        if(ctx.session.wordToGuess) {
+        if (ctx.session.wordToGuess) {
             const fileData = await fs.promises.readFile(fileName, 'utf-8');
             const words = JSON.parse(fileData);
             const userWord = userMessage.trim().toLowerCase();
+            let isCorrect = false;
 
-            const isCorrect = words.some(word => {
-                return word.word.trim().toLowerCase() === userWord;
-            });
+            for (let i = 0; i < words.length; i++) {
+                const currentWord = words[i];
+                const wordToLower = currentWord.word.trim().toLowerCase();
+                const translationToLower = currentWord.translation.trim().toLowerCase();
 
-            if (isCorrect) {
-                await handleCorrectAnswer(ctx);
-            } else {
-                await handleIncorrectAnswer(ctx);
+                if (wordToLower === userWord || translationToLower === userWord) {
+                    isCorrect = true;
+                    await handleCorrectAnswer(ctx);
+
+                    if (wordToLower === ctx.session.wordToGuess.word ||
+                        translationToLower === ctx.session.wordToGuess.translation) {
+
+                        currentWord.count++;
+                        await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                        break;
+                    }
+                }
             }
-            delete ctx.session.wordToGuess;
-            setTimeout(async () => {
-                await startQuiz(ctx);
-            }, 500);
+        } else {
+            await handleIncorrectAnswer(ctx);
         }
+        delete ctx.session.wordToGuess;
+        setTimeout(async () => {
+            await startQuiz(ctx);
+        }, 500);
     }
 });
 
@@ -272,7 +324,27 @@ function shuffleArray(array) {
 
     return array;
 }
+async function sendPage(ctx, words) {
+    const startIndex = (ctx.session.currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
+    const pageWords = words.slice(startIndex, endIndex);
 
+    const message = `Количество добавленных слов: ${words.length}\nСтраница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
+
+    const buttons = [];
+    if (words.length > endIndex) {
+        buttons.push({ text: 'Следующая страница', callback_data: 'next' });
+    }
+    if (ctx.session.currentPage > 1) {
+        buttons.push({ text: 'Предыдущая страница', callback_data: 'prev' });
+    }
+
+    await ctx.reply(message, {
+        reply_markup: {
+            inline_keyboard: [buttons],
+        },
+    });
+}
 
 bot.launch()
 
