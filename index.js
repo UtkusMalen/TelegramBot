@@ -43,36 +43,85 @@ bot.command('list', async (ctx) => {
     }
 });
 
-bot.on('callback_query', async (ctx) => {
-    const data = ctx.update.callback_query.data;
+bot.action('next', async (ctx) => {
+    if (ctx.session.currentPage === undefined) {
+        ctx.session.currentPage = 1;
+    }
 
-    if (data === 'next' || data === 'prev') {
-        const { id } = ctx.from;
-        const fileName = `${id}.json`;
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
 
-        try {
-            const fileData = await fs.promises.readFile(fileName, 'utf-8');
-            const words = JSON.parse(fileData);
+    try {
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        const words = JSON.parse(fileData);
 
-            if (words.length === 0) {
-                await ctx.reply('Список слов пуст');
-                return;
-            }
-
-            if (data === 'next' && words.length > (ctx.session.currentPage * ITEMS_PER_PAGE)) {
-                ctx.session.currentPage++;
-            } else if (data === 'prev' && ctx.session.currentPage > 1) {
-                ctx.session.currentPage--;
-            }
-
-            await sendPage(ctx, words);
-
-        } catch (err) {
-            console.error(err);
-            await ctx.reply('Упс, кажется, что-то пошло не так');
+        if (words.length === 0) {
+            await ctx.reply('Список слов пуст');
+            return;
         }
+
+        if (words.length > (ctx.session.currentPage * ITEMS_PER_PAGE)) {
+            ctx.session.currentPage++;
+        }
+
+        await sendPage(ctx, words);
+
+    } catch (err) {
+        console.error(err);
+        await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 });
+
+bot.action('prev', async (ctx) => {
+    if (ctx.session.currentPage === undefined) {
+        ctx.session.currentPage = 1;
+    }
+
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
+
+    try {
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        const words = JSON.parse(fileData);
+
+        if (words.length === 0) {
+            await ctx.reply('Список слов пуст');
+            return;
+        }
+
+        if (ctx.session.currentPage > 1) {
+            ctx.session.currentPage--;
+        }
+
+        await sendPage(ctx, words);
+
+    } catch (err) {
+        console.error(err);
+        await ctx.reply('Упс, кажется, что-то пошло не так');
+    }
+});
+async function sendPage(ctx, words) {
+    const startIndex = (ctx.session.currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
+    const pageWords = words.slice(startIndex, endIndex);
+
+    const message = `Количество добавленных слов: ${words.length}\nСтраница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
+
+    const buttons = [];
+    if (words.length > endIndex) {
+        buttons.push({ text: 'Следующая страница', callback_data: 'next' });
+    }
+    if (ctx.session.currentPage > 1) {
+        buttons.push({ text: 'Предыдущая страница', callback_data: 'prev' });
+    }
+
+    await ctx.reply(message, {
+        reply_markup: {
+            inline_keyboard: [buttons],
+        },
+    });
+}
+
 
 bot.command('clear' , async (ctx) => {
     const {id} = ctx.from;
@@ -146,7 +195,6 @@ async function startQuiz(ctx) {
             await ctx.reply(`Введите перевод слова: ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
-            ctx.session.wordToGuess = randomWord.word;
             return;
         } else if(randomChance < 0.6) {
             isGuessTranslation = false;
@@ -222,10 +270,11 @@ bot.on('message', async (ctx) => {
             await ctx.reply("Упс, кажется, что-то пошло не так")
         }
     } else {
-        if (ctx.session.wordToGuess) {
+        try {
             const fileData = await fs.promises.readFile(fileName, 'utf-8');
             const words = JSON.parse(fileData);
             const userWord = userMessage.trim().toLowerCase();
+            const randomWord = getRandomWord(words);
             let isCorrect = false;
 
             for (let i = 0; i < words.length; i++) {
@@ -237,22 +286,23 @@ bot.on('message', async (ctx) => {
                     isCorrect = true;
                     await handleCorrectAnswer(ctx);
 
-                    if (wordToLower === ctx.session.wordToGuess.word ||
-                        translationToLower === ctx.session.wordToGuess.translation) {
-
+                    if (wordToLower === randomWord.word.toLowerCase() || translationToLower === randomWord.translation.toLowerCase()) {
                         currentWord.count++;
                         await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
                         break;
                     }
                 }
             }
-        } else {
-            await handleIncorrectAnswer(ctx);
+
+            if (!isCorrect) {
+                await handleIncorrectAnswer(ctx);
+            }
+            setTimeout(async () => {
+                await startQuiz(ctx);
+            }, 100);
+        } catch (err) {
+            ctx.error("Упс, кажется, что-то пошло не так");
         }
-        delete ctx.session.wordToGuess;
-        setTimeout(async () => {
-            await startQuiz(ctx);
-        }, 500);
     }
 });
 
@@ -323,27 +373,6 @@ function shuffleArray(array) {
     }
 
     return array;
-}
-async function sendPage(ctx, words) {
-    const startIndex = (ctx.session.currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
-    const pageWords = words.slice(startIndex, endIndex);
-
-    const message = `Количество добавленных слов: ${words.length}\nСтраница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
-
-    const buttons = [];
-    if (words.length > endIndex) {
-        buttons.push({ text: 'Следующая страница', callback_data: 'next' });
-    }
-    if (ctx.session.currentPage > 1) {
-        buttons.push({ text: 'Предыдущая страница', callback_data: 'prev' });
-    }
-
-    await ctx.reply(message, {
-        reply_markup: {
-            inline_keyboard: [buttons],
-        },
-    });
 }
 
 bot.launch()
