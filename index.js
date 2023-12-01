@@ -20,6 +20,7 @@ bot.start((ctx) => {
 });
 bot.use(session());
 bot.help((ctx) => ctx.reply(text.help))
+
 const ITEMS_PER_PAGE = 10;
 bot.command('list', async (ctx) => {
     const { id } = ctx.from;
@@ -121,8 +122,6 @@ async function sendPage(ctx, words) {
         },
     });
 }
-
-
 bot.command('clear' , async (ctx) => {
     const {id} = ctx.from;
     const fileName = `${id}.json`
@@ -225,14 +224,20 @@ async function startQuiz(ctx) {
             const isCorrect = correctWords.some(word => option === (isGuessTranslation ? word.word : word.translation));
             return Markup.callbackButton(option, isCorrect.toString());
         });
-        correctWords.forEach(word => {
+        const uniqueAnswers = new Set();
+        correctWords.forEach (word => {
             const correctAnswer = isGuessTranslation ? word.word : word.translation;
-            buttons.push(Markup.callbackButton(correctAnswer, 'true'));
+            uniqueAnswers.add(correctAnswer);
         });
+        uniqueAnswers.forEach(answer => {
+            buttons.push(Markup.callbackButton(answer, 'true'));
+        })
         shuffleArray(buttons);
+        const maxButtons = 4;
+        const limitedButtons = buttons.slice(0, maxButtons);
         const questionType = isGuessTranslation ? 'слово:' : 'перевод слова:';
         await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
-            reply_markup: Markup.inlineKeyboard(buttons, { columns: 2 }),
+            reply_markup: Markup.inlineKeyboard(limitedButtons, { columns: 2 }),
         });
     } catch (error) {
         console.error(error);
@@ -270,40 +275,35 @@ bot.on('message', async (ctx) => {
             await ctx.reply("Упс, кажется, что-то пошло не так")
         }
     } else {
-        try {
-            const fileData = await fs.promises.readFile(fileName, 'utf-8');
-            const words = JSON.parse(fileData);
-            const userWord = userMessage.trim().toLowerCase();
-            const randomWord = getRandomWord(words);
-            let isCorrect = false;
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        const words = JSON.parse(fileData);
+        const userWord = userMessage.trim().toLowerCase();
+        const randomWord = getRandomWord(words);
+        const currentWord = randomWord.word.trim().toLowerCase();
+        let isCorrect = false;
 
-            for (let i = 0; i < words.length; i++) {
-                const currentWord = words[i];
-                const wordToLower = currentWord.word.trim().toLowerCase();
-                const translationToLower = currentWord.translation.trim().toLowerCase();
+        for (let i = 0; i < words.length; i++) {
+            const findWord = words[i];
+            const wordToLower = findWord.word.trim().toLowerCase();
+            const translationToLower = findWord.translation.trim().toLowerCase();
 
-                if (wordToLower === userWord || translationToLower === userWord) {
-                    isCorrect = true;
-                    await handleCorrectAnswer(ctx);
+            if (wordToLower === userWord || translationToLower === userWord) {
+                isCorrect = true;
+                await handleCorrectAnswer(ctx);
 
-                    if (wordToLower === randomWord.word.toLowerCase() || translationToLower === randomWord.translation.toLowerCase()) {
-                        currentWord.count++;
-                        await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                        break;
-                    }
+                if (wordToLower === currentWord || translationToLower === currentWord) {
+                    currentWord.count++;
+                    await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                    break;
                 }
             }
-
-            if (!isCorrect) {
-                ctx.reply(`Ой, неправильно! Правильное слово: ${randomWord.word}`);
-
-            }
-            setTimeout(async () => {
-                await startQuiz(ctx);
-            }, 100);
-        } catch (err) {
-            ctx.error("Упс, кажется, что-то пошло не так");
         }
+        if (!isCorrect) {
+            await ctx.reply(`Ой, неправильно!`);
+        }
+        setTimeout(async () => {
+            await startQuiz(ctx);
+            }, 100);
     }
 });
 
@@ -344,19 +344,13 @@ async function checkAnswer(ctx, isCorrect) {
     }
 }
 async function handleCorrectAnswer(ctx) {
-    try {
-        await ctx.reply(`Правильно!`);
-    } catch (err) {
-        console.error(err);
-    }
+    await ctx.reply(`Правильно!`);
+    await ctx.answerCbQuery();
 }
 
 async function handleIncorrectAnswer(ctx) {
-    try {
-        ctx.reply('Ой, неправильно!');
-    } catch (err) {
-        console.error(err);
-    }
+    ctx.reply('Ой, неправильно!');
+    await ctx.answerCbQuery();
 }
 
 function shuffleArray(array) {
