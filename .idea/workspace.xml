@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="bcc19fa6-d29a-43e3-865a-33c8bb5d0b9c" name="Changes" comment="Telegram bot for learning words">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,7 +122,10 @@
       <workItem from="1701116300970" duration="7189000" />
       <workItem from="1701169176976" duration="798000" />
       <workItem from="1701169993358" duration="23771000" />
-      <workItem from="1701196841908" duration="1391000" />
+      <workItem from="1701196841908" duration="8707000" />
+      <workItem from="1701273274846" duration="11605000" />
+      <workItem from="1701361974504" duration="4966000" />
+      <workItem from="1701367237761" duration="2466000" />
     </task>
     <task id="LOCAL-00001" summary="Telegram bot for learning words">
       <option name="closed" value="true" />
@@ -237,7 +239,47 @@
       <option name="project" value="LOCAL" />
       <updated>1701196532414</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701198385860</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1701198385860</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701277846967</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1701277846967</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701286489799</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1701286489799</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701366838212</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1701366838212</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Telegram bot for learning words">
+      <option name="closed" value="true" />
+      <created>1701369703958</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1701369703958</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -295,7 +295,8 @@ bot.on('message', async (ctx) => {
             }
 
             if (!isCorrect) {
-                await handleIncorrectAnswer(ctx);
+                ctx.reply(`Ой, неправильно! Правильное слово: ${randomWord.word}`);
+
             }
             setTimeout(async () => {
                 await startQuiz(ctx);
