@@ -326,17 +326,22 @@ bot.on('message', async (ctx) => {
         const randomWord = getRandomWord(words);
         const currentWord = randomWord.word.trim().toLowerCase();
         let isCorrect = false;
+        const MAX_LEVENSHTEIN_DISTANCE = 1;
 
         for (let i = 0; i < words.length; i++) {
             const findWord = words[i];
             const wordToLower = findWord.word.trim().toLowerCase();
             const translationToLower = findWord.translation.trim().toLowerCase();
+            const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
+            const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
 
-            if (wordToLower === userWord || translationToLower === userWord) {
-                isCorrect = true;
-                await handleCorrectAnswer(ctx);
-
-                if (wordToLower === currentWord || translationToLower === currentWord) {
+            if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
+                if(levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
+                    await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово ${findWord.word}`);
+                    isCorrect = true;
+                } else{
+                    isCorrect = true;
+                    await handleCorrectAnswer(ctx);
                     currentWord.count++;
                     await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
                     break;
@@ -414,6 +419,32 @@ function shuffleArray(array) {
     return array;
 }
 
+function levenshteinDistance(a, b) {
+    const distanceMatrix = Array.from(Array(a.length + 1), () =>
+        Array(b.length + 1).fill(0)
+    );
+
+    for (let i = 0; i <= a.length; i++) {
+        distanceMatrix[i][0] = i;
+    }
+
+    for (let j = 0; j <= b.length; j++) {
+        distanceMatrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+            distanceMatrix[i][j] = Math.min(
+                distanceMatrix[i - 1][j] + 1,
+                distanceMatrix[i][j - 1] + 1,
+                distanceMatrix[i - 1][j - 1] + indicator
+            );
+        }
+    }
+
+    return distanceMatrix[a.length][b.length];
+}
 
 bot.launch()
 
