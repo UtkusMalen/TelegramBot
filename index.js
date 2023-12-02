@@ -1,8 +1,9 @@
-const { Telegraf, Markup, session} = require('telegraf');
+const { Telegraf, Markup} = require('telegraf');
 require('dotenv').config()
 const fs = require('fs')
 const text = require('./const')
 require('path');
+const session = require('telegraf/session');
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.start((ctx) => {
     const { id } = ctx.from;
@@ -16,7 +17,7 @@ bot.start((ctx) => {
             });
         }
     });
-    ctx.reply(`👋 Привет, ${ctx.from.first_name} ! Напиши команду /help чтобы узнать, как работает бот`);
+    ctx.reply(`👋 Привет, ${ctx.from.first_name} ! Напиши команду /help чтобы узнать, как работает бот😊`);
 });
 bot.use(session());
 bot.help((ctx) => ctx.reply(text.help))
@@ -31,7 +32,7 @@ bot.command('list', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст');
+            await ctx.reply('Список слов пуст☹️');
             return;
         }
 
@@ -40,7 +41,7 @@ bot.command('list', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Упс, кажется, что-то пошло не так😭');
     }
 });
 
@@ -57,7 +58,7 @@ bot.action('next', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст');
+            await ctx.reply('Список слов пуст☹️');
             return;
         }
 
@@ -69,7 +70,7 @@ bot.action('next', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Упс, кажется, что-то пошло не так😭');
     }
 });
 
@@ -86,7 +87,7 @@ bot.action('prev', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст');
+            await ctx.reply('Список слов пуст☹️');
             return;
         }
 
@@ -98,7 +99,7 @@ bot.action('prev', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Упс, кажется, что-то пошло не так😭');
     }
 });
 async function sendPage(ctx, words) {
@@ -106,7 +107,7 @@ async function sendPage(ctx, words) {
     const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
     const pageWords = words.slice(startIndex, endIndex);
 
-    const message = `Количество добавленных слов: ${words.length}\nСтраница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
+    const message = `\nСтраница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
 
     const buttons = [];
     if (words.length > endIndex) {
@@ -136,10 +137,10 @@ bot.command('clear' , async (ctx) => {
                 console.error(err);
             }
         })
-        await ctx.reply('Список слов успешно очищен')
+        await ctx.reply('Список слов успешно очищен👍')
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Упс, кажется, что-то пошло не так😭');
     }
 })
 bot.command('delete' , async (ctx) => {
@@ -165,28 +166,45 @@ bot.command('delete' , async (ctx) => {
             fs.writeFile(fileName, updatedData, (err) => {
                 if (err) {
                     console.error(err);
-                    ctx.reply('Упс, кажется, что-то пошло не так. Попробуйте снова');
+                    ctx.reply('Упс, кажется, что-то пошло не так. Попробуйте снова😭');
                     return;
                 }
-                ctx.reply('Слово удалено');
+                ctx.reply('Слово удалено👍');
             })
         } else {
-            await ctx.reply('Такого слова не существует в списке, либо вы неправильно его ввели')
+            await ctx.reply('Такого слова не существует в списке, либо вы неправильно его ввели🤔')
         }
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Упс, кажется, что-то пошло не так😭');
     }
 })
+
 bot.command('quiz', async (ctx) => {
     await startQuiz(ctx);
 });
 async function startQuiz(ctx) {
     const { id } = ctx.from;
     const fileName = `${id}.json`;
+    const totalFileName = `${id}Total.json`;
     try {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         let words = JSON.parse(fileData);
+        let totalData = { totalQuizCount: 0, date: '' };
+        if (fs.existsSync(totalFileName)) {
+            const totalFileData = await fs.promises.readFile(totalFileName, 'utf-8');
+            totalData = JSON.parse(totalFileData);
+        }
+        const currentDate = new Date().toISOString().split('T')[0];
+        if (totalData.date !== currentDate) {
+            totalData.totalQuizCount = 0;
+            totalData.date = currentDate;
+        }
+        totalData.totalQuizCount++;
+        await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
+        ctx.session.quizCount = totalData.totalQuizCount;
+
+
         const randomChance = Math.random();
         let randomWord, isGuessTranslation = false
         if(randomChance < 0.3) {
@@ -241,9 +259,36 @@ async function startQuiz(ctx) {
         });
     } catch (error) {
         console.error(error);
-        ctx.reply('Кажется, список слов пуст');
+        ctx.reply('Кажется, список слов пуст☹️');
     }
 }
+
+bot.command('profile', async (ctx) => {
+    const { id } = ctx.from;
+    const totalFileName = `${id}Total.json`;
+    try {
+        const fileName = `${id}.json`;
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        const words = JSON.parse(fileData);
+        const wordsCount = words.length;
+        let totalData = { totalQuizCount: 0 };
+        if (fs.existsSync(totalFileName)) {
+            const totalFileData = await fs.promises.readFile(totalFileName, 'utf-8');
+            totalData = JSON.parse(totalFileData);
+        }
+        const currentDate = new Date().toISOString().split('T')[0];
+        if (totalData.date !== currentDate) {
+            totalData.totalQuizCount = 0;
+            totalData.date = currentDate;
+            await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
+        }
+        await ctx.reply(`📜Ваш профиль:\n\n📊За сегодня вы сделали через /quiz ${totalData.totalQuizCount} слов(а)\n🗂Всего добавлено слов: ${wordsCount}`);
+
+    } catch (error) {
+        console.error(error);
+        await ctx.reply('Произошла ошибка при обработке запроса😭');
+    }
+});
 
 bot.on('message', async (ctx) => {
     const {id} = ctx.from;
@@ -261,18 +306,18 @@ bot.on('message', async (ctx) => {
             for (let i = 0; i < words.length; i++) {
                 if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
                     wordFound = true;
-                    await ctx.reply(`Слово ${word} уже существует в списке`);
+                    await ctx.reply(`Слово ${word} уже существует в списке🤔`);
                     break;
                 }
             }
             if (!wordFound) {
                 words.push(data);
                 await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                await ctx.reply(`Слово ${word} было добавлено в список`);
+                await ctx.reply(`Слово ${word} было добавлено в список👍`);
             }
         } catch (err) {
             console.error(err);
-            await ctx.reply("Упс, кажется, что-то пошло не так")
+            await ctx.reply("Упс, кажется, что-то пошло не так😭")
         }
     } else {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
@@ -299,7 +344,7 @@ bot.on('message', async (ctx) => {
             }
         }
         if (!isCorrect) {
-            await ctx.reply(`Ой, неправильно!`);
+            await ctx.reply(`Ой, неправильно!☹️`);
         }
         setTimeout(async () => {
             await startQuiz(ctx);
@@ -338,19 +383,18 @@ async function checkAnswer(ctx, isCorrect) {
     } catch (err) {
         console.error(err);
     } finally {
+        await ctx.answerCbQuery();
         setTimeout(async () => {
             await startQuiz(ctx);
         },500);
     }
 }
 async function handleCorrectAnswer(ctx) {
-    await ctx.reply(`Правильно!`);
-    await ctx.answerCbQuery();
+    await ctx.reply(`Правильно!👍`);
 }
 
 async function handleIncorrectAnswer(ctx) {
-    ctx.reply('Ой, неправильно!');
-    await ctx.answerCbQuery();
+    ctx.reply('Ой, неправильно!☹️');
 }
 
 function shuffleArray(array) {
@@ -369,6 +413,7 @@ function shuffleArray(array) {
 
     return array;
 }
+
 
 bot.launch()
 
