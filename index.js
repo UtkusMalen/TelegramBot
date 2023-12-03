@@ -273,6 +273,10 @@ async function startQuiz(ctx) {
     try {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         let words = JSON.parse(fileData);
+        if(words.length === 0) {
+            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            return;
+        }
         let totalData = [];
         if (fs.existsSync(totalFileName)) {
             const totalFileData = await fs.promises.readFile(totalFileName, 'utf-8');
@@ -411,43 +415,45 @@ bot.on('message', async (ctx) => {
             console.error(err);
             await ctx.reply(sendLocalizedText(ctx, 'error'))
         }
-    } if(!userMessage.includes('/')) {
-        const fileData = await fs.promises.readFile(fileName, 'utf-8');
-        const words = JSON.parse(fileData);
-        const userWord = userMessage.trim().toLowerCase();
-        const randomWord = getRandomWord(words);
-        const currentWord = randomWord.word.trim().toLowerCase();
-        let isCorrect = false;
-        const MAX_LEVENSHTEIN_DISTANCE = 1;
+    } else {
+        if(!userMessage.includes('/')) {
+            const fileData = await fs.promises.readFile(fileName, 'utf-8');
+            const words = JSON.parse(fileData);
+            const userWord = userMessage.trim().toLowerCase();
+            const randomWord = getRandomWord(words);
+            const currentWord = randomWord.word.trim().toLowerCase();
+            let isCorrect = false;
+            const MAX_LEVENSHTEIN_DISTANCE = 1;
 
-        for (let i = 0; i < words.length; i++) {
-            const findWord = words[i];
-            const wordToLower = findWord.word.trim().toLowerCase();
-            const translationToLower = findWord.translation.trim().toLowerCase();
-            const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
-            const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
+            for (let i = 0; i < words.length; i++) {
+                const findWord = words[i];
+                const wordToLower = findWord.word.trim().toLowerCase();
+                const translationToLower = findWord.translation.trim().toLowerCase();
+                const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
+                const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
 
-            if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
-                if(levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                    await ctx.reply(`${sendLocalizedText(ctx, 'wordWithError')} ${findWord.word}`);
-                    isCorrect = true;
-                } else{
-                    isCorrect = true;
-                    await handleCorrectAnswer(ctx);
-                    currentWord.count++;
-                    await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                    break;
+                if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
+                    if(levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
+                        await ctx.reply(`${sendLocalizedText(ctx, 'wordWithError')} ${findWord.word}`);
+                        isCorrect = true;
+                    } else{
+                        isCorrect = true;
+                        await handleCorrectAnswer(ctx);
+                        currentWord.count++;
+                        await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                        break;
+                    }
                 }
             }
+            if (!isCorrect) {
+                await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
+            }
+            setTimeout(async () => {
+                await startQuiz(ctx);
+                }, 100);
         }
-        if (!isCorrect) {
-            await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
-        }
-        setTimeout(async () => {
-            await startQuiz(ctx);
-            }, 100);
     }
-});
+})
 
 function getRandomWord(words) {
     if(words.length === 0) {
