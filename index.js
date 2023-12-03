@@ -546,9 +546,14 @@ function getLanguageFromJSON(ctx) {
     const id = ctx.from.id;
     const langFileName = `${id}Lang.json`;
     try {
-        const fileData = fs.readFileSync(langFileName, 'utf-8');
-        const langObj = JSON.parse(fileData);
-        return langObj.language;
+        if (fs.existsSync(langFileName)) {
+            const fileData = fs.readFileSync(langFileName, 'utf-8');
+            const langObj = JSON.parse(fileData);
+            return langObj.language;
+        } else {
+            console.error(`File ${langFileName} does not exist`);
+            return null;
+        }
     } catch (error) {
         console.error(error);
         return null;
