@@ -450,6 +450,9 @@ bot.on('message', async (ctx) => {
 });
 
 function getRandomWord(words) {
+    if(words.length === 0) {
+        return null;
+    }
     const randomChance = Math.random();
     if(randomChance < 0.67) {
         return words[Math.floor(Math.random() * words.length)];
@@ -543,6 +546,9 @@ function sendLocalizedText(ctx, key) {
 }
 
 function getLanguageFromJSON(ctx) {
+    if(!`{id}Lang.json`) {
+        return null;
+    }
     const id = ctx.from.id;
     const langFileName = `${id}Lang.json`;
     try {
@@ -550,9 +556,6 @@ function getLanguageFromJSON(ctx) {
             const fileData = fs.readFileSync(langFileName, 'utf-8');
             const langObj = JSON.parse(fileData);
             return langObj.language;
-        } else {
-            console.error(`File ${langFileName} does not exist`);
-            return null;
         }
     } catch (error) {
         console.error(error);
