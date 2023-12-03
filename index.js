@@ -101,6 +101,10 @@ bot.action('ua', async (ctx) => {
     await ctx.reply('Мова встановлена на українську');
 })
 
+bot.help((ctx) => {
+    ctx.reply(sendLocalizedText(ctx, 'help'));
+})
+
 const ITEMS_PER_PAGE = 10;
 bot.command('list', async (ctx) => {
     const { id } = ctx.from;
@@ -407,7 +411,7 @@ bot.on('message', async (ctx) => {
             console.error(err);
             await ctx.reply(sendLocalizedText(ctx, 'error'))
         }
-    } else {
+    } if(!userMessage.includes('/')) {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         const words = JSON.parse(fileData);
         const userWord = userMessage.trim().toLowerCase();
