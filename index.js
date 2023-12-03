@@ -367,25 +367,39 @@ bot.command('profile', async (ctx) => {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         const words = JSON.parse(fileData);
         const wordsCount = words.length;
-        let totalData = { totalQuizCount: 0 };
+
+        let totalData = [];
         if (fs.existsSync(totalFileName)) {
             const totalFileData = await fs.promises.readFile(totalFileName, 'utf-8');
             totalData = JSON.parse(totalFileData);
+            if(!Array.isArray(totalData)) {
+                totalData = [];
+            }
         }
-        const currentDate = new Date().toISOString().split('T')[0];
-        if (totalData.date !== currentDate) {
-            totalData.totalQuizCount = 0;
-            totalData.date = currentDate;
-            await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
-        }
-        await ctx.reply(`${sendLocalizedText(ctx, 'profile')}\n\n${sendLocalizedText(ctx, 'quizCount')} ${totalData.totalQuizCount} ${sendLocalizedText(ctx, 'words')}\n${sendLocalizedText(ctx, 'totalWords')} ${wordsCount}`);
 
+        const currentDate = new Date().toISOString().split('T')[0];
+        let foundDate = false;
+
+        for(let i = 0; i < totalData.length; i++) {
+            if(totalData[i].date === currentDate) {
+                totalData[i].totalQuizCount = totalData[i].totalQuizCount || 0;
+                await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
+                await ctx.reply(`${sendLocalizedText(ctx, 'profile')}\n\n${sendLocalizedText(ctx, 'quizCount')} ${totalData[i].totalQuizCount} ${sendLocalizedText(ctx, 'words')}\n${sendLocalizedText(ctx, 'totalWords')} ${wordsCount}`);
+                foundDate = true;
+                break;
+            }
+        }
+
+        if(!foundDate) {
+            totalData.push({ date: currentDate, totalQuizCount: 0 });
+            await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
+            await ctx.reply(`${sendLocalizedText(ctx, 'profile')}\n\n${sendLocalizedText(ctx, 'quizCount')} 0 ${sendLocalizedText(ctx, 'words')}\n${sendLocalizedText(ctx, 'totalWords')} ${wordsCount}`);
+        }
     } catch (error) {
         console.error(error);
         await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
-
 bot.on('message', async (ctx) => {
     const {id} = ctx.from;
     const fileName = `${id}.json`;
