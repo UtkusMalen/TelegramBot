@@ -1,10 +1,15 @@
 const { Telegraf, Markup} = require('telegraf');
 require('dotenv').config()
 const fs = require('fs')
-const text = require('./const')
 require('path');
 const session = require('telegraf/session');
+const localization = {
+    en: require('./localization/en.json'),
+    ru: require('./localization/ru.json'),
+    ua: require('./localization/ua.json'),
+};
 const bot = new Telegraf(process.env.BOT_TOKEN)
+bot.use(session());
 bot.start((ctx) => {
     const { id } = ctx.from;
     const fileName = `${id}.json`;
@@ -17,10 +22,84 @@ bot.start((ctx) => {
             });
         }
     });
-    ctx.reply(`👋 Привет, ${ctx.from.first_name} ! Напиши команду /help чтобы узнать, как работает бот😊`);
+    ctx.reply(ctx.from.first_name + sendLocalizedText(ctx, 'welcome'));
 });
-bot.use(session());
-bot.help((ctx) => ctx.reply(text.help))
+bot.command('lang', async (ctx) => {
+    await ctx.reply('Choose language:', {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    Markup.callbackButton('English', 'en' ),
+                    Markup.callbackButton('Русскийㅤ', 'ru'),
+                    Markup.callbackButton('Українська', 'ua'),
+                ],
+            ],
+        },
+   });
+})
+bot.action('en', async (ctx) => {
+    const { id } = ctx.from;
+    const langFileName = `${id}Lang.json`;
+    const langData = { language: 'en' };
+    fs.access(langFileName, fs.constants.F_OK, (err) => {
+        if (err) {
+            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        } else {
+            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        }
+    })
+    await ctx.reply('Language set to English');
+})
+bot.action('ru' , async (ctx) => {
+    const { id } = ctx.from;
+    const langFileName = `${id}Lang.json`;
+    const langData = { language: 'ru' };
+    fs.access(langFileName, fs.constants.F_OK, (err) => {
+        if (err) {
+            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        } else {
+            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        }
+    })
+    await ctx.reply('Язык установлен на русский');
+})
+bot.action('ua', async (ctx) => {
+    const { id } = ctx.from;
+    const langFileName = `${id}Lang.json`;
+    const langData = { language: 'ua' };
+    fs.access(langFileName, fs.constants.F_OK, (err) => {
+        if (err) {
+            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        } else {
+            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        }
+    })
+    await ctx.reply('Мова встановлена на українську');
+})
 
 const ITEMS_PER_PAGE = 10;
 bot.command('list', async (ctx) => {
@@ -32,7 +111,7 @@ bot.command('list', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст☹️');
+            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
             return;
         }
 
@@ -41,7 +120,7 @@ bot.command('list', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так😭');
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
 
@@ -58,7 +137,7 @@ bot.action('next', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст☹️');
+            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
             return;
         }
 
@@ -70,7 +149,7 @@ bot.action('next', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так😭');
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
 
@@ -87,7 +166,7 @@ bot.action('prev', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст☹️');
+            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
             return;
         }
 
@@ -99,7 +178,7 @@ bot.action('prev', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так😭');
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
 async function sendPage(ctx, words) {
@@ -107,14 +186,14 @@ async function sendPage(ctx, words) {
     const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
     const pageWords = words.slice(startIndex, endIndex);
 
-    const message = `\nСтраница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
+    const message = `\n${sendLocalizedText(ctx, 'page')} ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
 
     const buttons = [];
     if (words.length > endIndex) {
-        buttons.push({ text: 'Следующая страница', callback_data: 'next' });
+        buttons.push({ text: `${sendLocalizedText(ctx, 'next')}`, callback_data: 'next' });
     }
     if (ctx.session.currentPage > 1) {
-        buttons.push({ text: 'Предыдущая страница', callback_data: 'prev' });
+        buttons.push({ text: `${sendLocalizedText(ctx, 'prev')}`, callback_data: 'prev' });
     }
 
     await ctx.reply(message, {
@@ -137,10 +216,10 @@ bot.command('clear' , async (ctx) => {
                 console.error(err);
             }
         })
-        await ctx.reply('Список слов успешно очищен👍')
+        await ctx.reply(sendLocalizedText(ctx, 'clear'));
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так😭');
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 })
 bot.command('delete' , async (ctx) => {
@@ -166,17 +245,17 @@ bot.command('delete' , async (ctx) => {
             fs.writeFile(fileName, updatedData, (err) => {
                 if (err) {
                     console.error(err);
-                    ctx.reply('Упс, кажется, что-то пошло не так. Попробуйте снова😭');
+                    ctx.reply(sendLocalizedText(ctx, 'error'));
                     return;
                 }
-                ctx.reply('Слово удалено👍');
+                ctx.reply(sendLocalizedText(ctx, 'wordDeleted'));
             })
         } else {
-            await ctx.reply('Такого слова не существует в списке, либо вы неправильно его ввели🤔')
+            await ctx.reply(sendLocalizedText(ctx, 'wordNotExists'));
         }
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так😭');
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 })
 
@@ -218,7 +297,7 @@ async function startQuiz(ctx) {
         let randomWord, isGuessTranslation = false
         if(randomChance < 0.3) {
             randomWord = getRandomWord(words);
-            await ctx.reply(`Введите перевод слова: ${randomWord.translation}`, {
+            await ctx.reply(`${sendLocalizedText(ctx, 'writeTranslation')} ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
             return;
@@ -262,13 +341,13 @@ async function startQuiz(ctx) {
         shuffleArray(buttons);
         const maxButtons = 4;
         const limitedButtons = buttons.slice(0, maxButtons);
-        const questionType = isGuessTranslation ? 'слово:' : 'перевод слова:';
-        await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
+        const questionType = isGuessTranslation ? `${sendLocalizedText(ctx, 'word')}` : `${sendLocalizedText(ctx, 'translation')}`;
+        await ctx.reply(`${sendLocalizedText(ctx, 'pick')} ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
             reply_markup: Markup.inlineKeyboard(limitedButtons, { columns: 2 }),
         });
     } catch (error) {
         console.error(error);
-        ctx.reply('Кажется, список слов пуст☹️');
+        ctx.reply(sendLocalizedText(ctx, 'emptyList'));
     }
 }
 
@@ -291,11 +370,11 @@ bot.command('profile', async (ctx) => {
             totalData.date = currentDate;
             await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
         }
-        await ctx.reply(`📜Ваш профиль:\n\n📊За сегодня вы сделали через /quiz ${totalData.totalQuizCount} слов(а)\n🗂Всего добавлено слов: ${wordsCount}`);
+        await ctx.reply(`${sendLocalizedText(ctx, 'profile')}\n\n${sendLocalizedText(ctx, 'quizCount')} ${totalData.totalQuizCount} ${sendLocalizedText(ctx, 'words')}\n${sendLocalizedText(ctx, 'totalWords')} ${wordsCount}`);
 
     } catch (error) {
         console.error(error);
-        await ctx.reply('Произошла ошибка при обработке запроса😭');
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
 
@@ -315,18 +394,18 @@ bot.on('message', async (ctx) => {
             for (let i = 0; i < words.length; i++) {
                 if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
                     wordFound = true;
-                    await ctx.reply(`Слово ${word} уже существует в списке🤔`);
+                    await ctx.reply(`${word} ${sendLocalizedText(ctx, 'wordExists')}`);
                     break;
                 }
             }
             if (!wordFound) {
                 words.push(data);
                 await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                await ctx.reply(`Слово ${word} было добавлено в список👍`);
+                await ctx.reply(`${word} ${sendLocalizedText(ctx, 'wordAdded')}`);
             }
         } catch (err) {
             console.error(err);
-            await ctx.reply("Упс, кажется, что-то пошло не так😭")
+            await ctx.reply(sendLocalizedText(ctx, 'error'))
         }
     } else {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
@@ -346,7 +425,7 @@ bot.on('message', async (ctx) => {
 
             if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
                 if(levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                    await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово ${findWord.word}`);
+                    await ctx.reply(`${sendLocalizedText(ctx, 'wordWithError')} ${findWord.word}`);
                     isCorrect = true;
                 } else{
                     isCorrect = true;
@@ -358,7 +437,7 @@ bot.on('message', async (ctx) => {
             }
         }
         if (!isCorrect) {
-            await ctx.reply(`Ой, неправильно!☹️`);
+            await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
         }
         setTimeout(async () => {
             await startQuiz(ctx);
@@ -404,11 +483,11 @@ async function checkAnswer(ctx, isCorrect) {
     }
 }
 async function handleCorrectAnswer(ctx) {
-    await ctx.reply(`Правильно!👍`);
+    await ctx.reply(sendLocalizedText(ctx, 'correct'));
 }
 
 async function handleIncorrectAnswer(ctx) {
-    ctx.reply('Ой, неправильно!☹️');
+    ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
 }
 
 function shuffleArray(array) {
@@ -453,6 +532,23 @@ function levenshteinDistance(a, b) {
     }
 
     return distanceMatrix[a.length][b.length];
+}
+function sendLocalizedText(ctx, key) {
+    let currentLanguage = getLanguageFromJSON(ctx) || 'en';
+    return localization[currentLanguage][key];
+}
+
+function getLanguageFromJSON(ctx) {
+    const id = ctx.from.id;
+    const langFileName = `${id}Lang.json`;
+    try {
+        const fileData = fs.readFileSync(langFileName, 'utf-8');
+        const langObj = JSON.parse(fileData);
+        return langObj.language;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
 }
 
 bot.launch()
