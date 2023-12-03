@@ -190,20 +190,29 @@ async function startQuiz(ctx) {
     try {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         let words = JSON.parse(fileData);
-        let totalData = { totalQuizCount: 0, date: '' };
+        let totalData = [];
         if (fs.existsSync(totalFileName)) {
             const totalFileData = await fs.promises.readFile(totalFileName, 'utf-8');
             totalData = JSON.parse(totalFileData);
+            if(!Array.isArray(totalData)) {
+                totalData = [];
+            }
         }
         const currentDate = new Date().toISOString().split('T')[0];
-        if (totalData.date !== currentDate) {
-            totalData.totalQuizCount = 0;
-            totalData.date = currentDate;
-        }
-        totalData.totalQuizCount++;
-        await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
-        ctx.session.quizCount = totalData.totalQuizCount;
+        let foundDate = false;
 
+        for(let i=0; i < totalData.length; i++) {
+            if(totalData[i].date === currentDate) {
+                totalData[i].totalQuizCount++;
+                foundDate = true;
+                break;
+            }
+        }
+
+        if(!foundDate) {
+            totalData.push({date: currentDate, totalQuizCount: 1});
+        }
+        await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
 
         const randomChance = Math.random();
         let randomWord, isGuessTranslation = false
