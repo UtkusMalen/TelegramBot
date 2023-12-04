@@ -4,8 +4,7 @@
   "description": "Telegram Bot for learning foreign words",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "buildCommand": "next build"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
