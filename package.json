@@ -1,7 +1,7 @@
 {
   "name": "telegrambot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Telegram Bot for learning foreign words",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
