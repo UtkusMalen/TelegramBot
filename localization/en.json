@@ -23,10 +23,12 @@
 	"profile": "Your profile:",
 	"quizCount": "for today, you did through /quiz",
 	"words": "words",
+	"notJSON": "Not a JSON file",
 	"incorrectWithCorrect": "Incorrect. Correct word:",
 	"totalWords": "In total added words:",
 	"wordWithError": "Correct, but in the word there is an error. The correct word is ",
 	"languageSet": "The bot language has been set to {{language}}",
+	"fileUploaded": "File uploaded",
 	"languageNotAvailable": "The selected language is not available. Please, choose a different language",
 	"help": "To add a word to the list, you need to write Word - Translation\n\n/help - help\n/start - start the bot (REQUIRED, otherwise nothing will work)\n/quiz - word translation quiz\n/list - view the list of words\n/delete Word - Translation - delete a word from the list\n/clear - clear the list of words\n/profile - open your profile\n/lang - change the bot language`",
 	"hello": "hello"
