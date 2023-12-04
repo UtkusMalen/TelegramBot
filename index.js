@@ -18,7 +18,7 @@ bot.start((ctx) => {
             });
         }
     });
-    ctx.reply(ctx.from.first_name + 'Привет! Для того чтобы подробнее узнать о боте, напиши /help');
+    ctx.reply(ctx.from.first_name + ', Привет! Для того чтобы подробнее узнать о боте, напиши /help');
 });
 
 bot.help((ctx) => {
