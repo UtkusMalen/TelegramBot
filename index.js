@@ -435,10 +435,6 @@ bot.on('message', async (ctx) => {
             const words = JSON.parse(fileData);
             const userWord = userMessage.trim().toLowerCase();
             const randomWord = getRandomWord(words);
-            if(words.length === 0) {
-                await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
-                return;
-            }
             const currentWord = randomWord.word.trim().toLowerCase();
             let isCorrect = false;
             const MAX_LEVENSHTEIN_DISTANCE = 1;
@@ -462,18 +458,16 @@ bot.on('message', async (ctx) => {
                         break;
                     }
                 }
-                if (!isCorrect) {
-                    await ctx.reply(`${sendLocalizedText(ctx, 'incorrectWithCorrect')} ${findWord.word}`);
-                    break;
-                }
+            }
+            if (!isCorrect) {
+                await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
             }
             setTimeout(async () => {
                 await startQuiz(ctx);
-                }, 100);
+            }, 100);
         }
     }
-})
-
+});
 function getRandomWord(words) {
     if(words.length === 0) {
         return null;
