@@ -423,6 +423,37 @@ bot.command('profile', async (ctx) => {
         await ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
+
+
+bot.on('document', async (ctx) => {
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
+
+    try {
+        const document = ctx.message.document;
+
+        if (document.file_name.endsWith('.json')) {
+            const fileLink = await bot.telegram.getFileLink(document.file_id);
+            const fileResponse = await fetch(fileLink);
+            const fileContent = await fileResponse.json();
+
+            fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (err) => {
+                if (err) {
+                    console.error(err);
+                    ctx.reply(sendLocalizedText(ctx, 'error'));
+                } else {
+                    ctx.reply(sendLocalizedText(ctx, 'fileUploaded'));
+                }
+            });
+        } else {
+            ctx.reply(sendLocalizedText(ctx, 'notJsonFile'));
+        }
+    } catch (err) {
+        console.error(err);
+        ctx.reply(sendLocalizedText(ctx, 'error'));
+    }
+});
+
 bot.on('message', async (ctx) => {
     const {id} = ctx.from;
     const fileName = `${id}.json`;
