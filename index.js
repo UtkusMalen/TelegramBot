@@ -359,6 +359,29 @@ async function startQuiz(ctx) {
     }
 }
 
+bot.command('download', async (ctx) => {
+    const { id } = ctx.from;
+    const fileName = `${id}.json`;
+
+    try {
+        const fileData = await fs.promises.readFile(fileName, 'utf-8');
+        const words = JSON.parse(fileData);
+
+        if (words.length === 0) {
+            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            return;
+        }
+
+        const jsonContent = JSON.stringify(words, null, 2);
+        const buffer = Buffer.from(jsonContent, 'utf-8');
+
+        await ctx.replyWithDocument({ source: buffer, filename: 'wordList.json' });
+    } catch (err) {
+        console.error(err);
+        await ctx.reply(sendLocalizedText(ctx, 'error'));
+    }
+});
+
 bot.command('profile', async (ctx) => {
     const { id } = ctx.from;
     const totalFileName = `${id}Total.json`;
