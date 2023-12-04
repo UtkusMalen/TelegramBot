@@ -310,11 +310,6 @@
     "count": 1
   },
   {
-    "word": "medias",
-    "translation": "носки",
-    "count": 1
-  },
-  {
     "word": "perchero",
     "translation": "вешалка",
     "count": 1
@@ -390,18 +385,8 @@
     "count": 1
   },
   {
-    "word": "victoria",
-    "translation": "победа",
-    "count": 2
-  },
-  {
     "word": "hueso",
     "translation": "кость",
-    "count": 1
-  },
-  {
-    "word": "altillo",
-    "translation": "чердак",
     "count": 1
   },
   {
@@ -457,7 +442,7 @@
   {
     "word": "soleado",
     "translation": "солнечно",
-    "count": 1
+    "count": 2
   },
   {
     "word": "caluroso",
@@ -560,6 +545,21 @@
     "count": 1
   },
   {
+    "word": "medias",
+    "translation": "носки",
+    "count": 2
+  },
+  {
+    "word": "altillo",
+    "translation": "чердак",
+    "count": 2
+  },
+  {
+    "word": "victoria",
+    "translation": "победа",
+    "count": 2
+  },
+  {
     "word": "barrer",
     "translation": "подметать",
     "count": 2
@@ -623,11 +623,6 @@
     "word": "nunca",
     "translation": "никогда",
     "count": 2
-  },
-  {
-    "word": "corazon",
-    "translation": "сердце",
-    "count": 3
   },
   {
     "word": "derecho",
@@ -758,11 +753,6 @@
     "word": "explicar",
     "translation": "объяснять",
     "count": 2
-  },
-  {
-    "word": "reloj",
-    "translation": "часы",
-    "count": 3
   },
   {
     "word": "abrir",
@@ -1198,6 +1188,16 @@
     "word": "harina",
     "translation": "мука",
     "count": 2
+  },
+  {
+    "word": "corazon",
+    "translation": "сердце",
+    "count": 3
+  },
+  {
+    "word": "reloj",
+    "translation": "часы",
+    "count": 3
   },
   {
     "word": "puerta",

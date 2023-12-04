@@ -435,6 +435,10 @@ bot.on('message', async (ctx) => {
             const words = JSON.parse(fileData);
             const userWord = userMessage.trim().toLowerCase();
             const randomWord = getRandomWord(words);
+            if(words.length === 0) {
+                await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+                return;
+            }
             const currentWord = randomWord.word.trim().toLowerCase();
             let isCorrect = false;
             const MAX_LEVENSHTEIN_DISTANCE = 1;
