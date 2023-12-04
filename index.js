@@ -3,11 +3,7 @@ require('dotenv').config()
 const fs = require('fs')
 require('path');
 const session = require('telegraf/session');
-const localization = {
-    en: require('./localization/en.json'),
-    ru: require('./localization/ru.json'),
-    ua: require('./localization/ua.json'),
-};
+const text = require('./const.js');
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(session());
 bot.start((ctx) => {
@@ -22,88 +18,12 @@ bot.start((ctx) => {
             });
         }
     });
-    ctx.reply(ctx.from.first_name + sendLocalizedText(ctx, 'welcome'));
+    ctx.reply(ctx.from.first_name + 'Привет! Для того чтобы подробнее узнать о боте, напиши /help');
 });
-bot.command('lang', async (ctx) => {
-    await ctx.reply('Choose language:', {
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    Markup.callbackButton('English', 'en' ),
-                    Markup.callbackButton('Русскийㅤ', 'ru'),
-                    Markup.callbackButton('Українська', 'ua'),
-                ],
-            ],
-        },
-   });
-})
-bot.action('en', async (ctx) => {
-    const { id } = ctx.from;
-    const langFileName = `${id}Lang.json`;
-    const langData = { language: 'en' };
-    fs.access(langFileName, fs.constants.F_OK, (err) => {
-        if (err) {
-            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        } else {
-            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        }
-    })
-    await ctx.reply('Language set to English');
-})
-bot.action('ru' , async (ctx) => {
-    const { id } = ctx.from;
-    const langFileName = `${id}Lang.json`;
-    const langData = { language: 'ru' };
-    fs.access(langFileName, fs.constants.F_OK, (err) => {
-        if (err) {
-            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        } else {
-            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        }
-    })
-    await ctx.reply('Язык установлен на русский');
-})
-bot.action('ua', async (ctx) => {
-    const { id } = ctx.from;
-    const langFileName = `${id}Lang.json`;
-    const langData = { language: 'ua' };
-    fs.access(langFileName, fs.constants.F_OK, (err) => {
-        if (err) {
-            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        } else {
-            fs.writeFile(langFileName, JSON.stringify(langData, null), (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        }
-    })
-    await ctx.reply('Мова встановлена на українську');
-})
 
 bot.help((ctx) => {
-    ctx.reply(sendLocalizedText(ctx, 'help'));
-})
+    ctx.reply(text.help);
+});
 
 const ITEMS_PER_PAGE = 10;
 bot.command('list', async (ctx) => {
@@ -115,7 +35,7 @@ bot.command('list', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            await ctx.reply('Список пуст');
             return;
         }
 
@@ -124,7 +44,7 @@ bot.command('list', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, что-то пошло не так...');
     }
 });
 
@@ -141,7 +61,7 @@ bot.action('next', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            await ctx.reply('Список пуст');
             return;
         }
 
@@ -153,7 +73,7 @@ bot.action('next', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, что-то пошло не так...');
     }
 });
 
@@ -170,7 +90,7 @@ bot.action('prev', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            await ctx.reply('Список пуст');
             return;
         }
 
@@ -182,7 +102,7 @@ bot.action('prev', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, что-то пошло не так...');
     }
 });
 async function sendPage(ctx, words) {
@@ -190,14 +110,14 @@ async function sendPage(ctx, words) {
     const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
     const pageWords = words.slice(startIndex, endIndex);
 
-    const message = `\n${sendLocalizedText(ctx, 'page')} ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
+    const message = `Страница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
 
     const buttons = [];
     if (words.length > endIndex) {
-        buttons.push({ text: `${sendLocalizedText(ctx, 'nextPage')}`, callback_data: 'next' });
+        buttons.push({ text: `Следующая страница`, callback_data: 'next' });
     }
     if (ctx.session.currentPage > 1) {
-        buttons.push({ text: `${sendLocalizedText(ctx, 'prevPage')}`, callback_data: 'prev' });
+        buttons.push({ text: `Предыдущая страница`, callback_data: 'prev' });
     }
 
     await ctx.reply(message, {
@@ -220,10 +140,10 @@ bot.command('clear' , async (ctx) => {
                 console.error(err);
             }
         })
-        await ctx.reply(sendLocalizedText(ctx, 'clear'));
+        await ctx.reply('Список слов успешно очищен');
     } catch (err) {
         console.error(err);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 })
 bot.command('delete' , async (ctx) => {
@@ -249,17 +169,17 @@ bot.command('delete' , async (ctx) => {
             fs.writeFile(fileName, updatedData, (err) => {
                 if (err) {
                     console.error(err);
-                    ctx.reply(sendLocalizedText(ctx, 'error'));
+                    ctx.reply('Упс, кажется, что-то пошло не так');
                     return;
                 }
-                ctx.reply(sendLocalizedText(ctx, 'wordDeleted'));
+                ctx.reply('Слово успешно удалено');
             })
         } else {
-            await ctx.reply(sendLocalizedText(ctx, 'wordNotExists'));
+            await ctx.reply('Такого слова не существует');
         }
     } catch (err) {
         console.error(err);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 })
 
@@ -274,7 +194,7 @@ async function startQuiz(ctx) {
         const fileData = await fs.promises.readFile(fileName, 'utf-8');
         let words = JSON.parse(fileData);
         if(words.length === 0) {
-            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            await ctx.reply('Список пуст');
             return;
         }
         let totalData = [];
@@ -305,7 +225,7 @@ async function startQuiz(ctx) {
         let randomWord, isGuessTranslation = false
         if(randomChance < 0.3) {
             randomWord = getRandomWord(words);
-            await ctx.reply(`${sendLocalizedText(ctx, 'writeTranslation')} ${randomWord.translation}`, {
+            await ctx.reply(`Напишите перевод: ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
             return;
@@ -349,13 +269,13 @@ async function startQuiz(ctx) {
         shuffleArray(buttons);
         const maxButtons = 4;
         const limitedButtons = buttons.slice(0, maxButtons);
-        const questionType = isGuessTranslation ? `${sendLocalizedText(ctx, 'word')}` : `${sendLocalizedText(ctx, 'translation')}`;
-        await ctx.reply(`${sendLocalizedText(ctx, 'pick')} ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
+        const questionType = isGuessTranslation ? `слово` : `перевод`;
+        await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
             reply_markup: Markup.inlineKeyboard(limitedButtons, { columns: 2 }),
         });
     } catch (error) {
         console.error(error);
-        ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+        ctx.reply('Список пуст');
     }
 }
 
@@ -368,7 +288,7 @@ bot.command('download', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply(sendLocalizedText(ctx, 'emptyList'));
+            await ctx.reply('Список слов пуст');
             return;
         }
 
@@ -378,7 +298,7 @@ bot.command('download', async (ctx) => {
         await ctx.replyWithDocument({ source: buffer, filename: `${id}.json` });
     } catch (err) {
         console.error(err);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, что-то пошло не так');
     }
 });
 
@@ -407,7 +327,7 @@ bot.command('profile', async (ctx) => {
             if(totalData[i].date === currentDate) {
                 totalData[i].totalQuizCount = totalData[i].totalQuizCount || 0;
                 await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
-                await ctx.reply(`${sendLocalizedText(ctx, 'profile')}\n\n${sendLocalizedText(ctx, 'quizCount')} ${totalData[i].totalQuizCount} ${sendLocalizedText(ctx, 'words')}\n${sendLocalizedText(ctx, 'totalWords')} ${wordsCount}`);
+                await ctx.reply(`Ваш профиль:\n\nКоличество сделанных через /quiz слов: ${totalData[i].totalQuizCount}\nОбщее количество добавленных слов: ${wordsCount}`);
                 foundDate = true;
                 break;
             }
@@ -416,11 +336,11 @@ bot.command('profile', async (ctx) => {
         if(!foundDate) {
             totalData.push({ date: currentDate, totalQuizCount: 0 });
             await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
-            await ctx.reply(`${sendLocalizedText(ctx, 'profile')}\n\n${sendLocalizedText(ctx, 'quizCount')} 0 ${sendLocalizedText(ctx, 'words')}\n${sendLocalizedText(ctx, 'totalWords')} ${wordsCount}`);
+            await ctx.reply(`Ваш профиль:\n\nКоличество сделанных через /quiz слов: 0\nОбщее количество добавленных слов: ${wordsCount}`);
         }
     } catch (error) {
         console.error(error);
-        await ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 });
 
@@ -431,29 +351,26 @@ bot.on('document', async (ctx) => {
 
     try {
         const document = ctx.message.document;
-
-        // Check if the uploaded file is a JSON file
         if (document && document.file_name && document.file_name.endsWith('.json')) {
             const fileLink = await bot.telegram.getFileLink(document.file_id);
             const response = await fetch(fileLink);
             const arrayBuffer = await response.arrayBuffer();
             const fileContent = JSON.parse(Buffer.from(arrayBuffer).toString());
 
-            // Write the contents of the uploaded JSON file to the user's specific file
             fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (err) => {
                 if (err) {
                     console.error(err);
-                    ctx.reply(sendLocalizedText(ctx, 'error'));
+                    ctx.reply('Упс, кажется, что-то пошло не так');
                 } else {
-                    ctx.reply(sendLocalizedText(ctx, 'fileUploaded'));
+                    ctx.reply("Файл успешно загружен");
                 }
             });
         } else {
-            ctx.reply(sendLocalizedText(ctx, 'notJsonFile'));
+            await ctx.reply('Вы прислали файл не с расширением .JSON');
         }
     } catch (err) {
         console.error(err);
-        ctx.reply(sendLocalizedText(ctx, 'error'));
+        await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 });
 bot.on('message', async (ctx) => {
@@ -472,18 +389,18 @@ bot.on('message', async (ctx) => {
             for (let i = 0; i < words.length; i++) {
                 if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
                     wordFound = true;
-                    await ctx.reply(`${word} ${sendLocalizedText(ctx, 'wordExists')}`);
+                    await ctx.reply(`${word} уже существует в списке слов`);
                     break;
                 }
             }
             if (!wordFound) {
                 words.push(data);
                 await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                await ctx.reply(`${word} ${sendLocalizedText(ctx, 'wordAdded')}`);
+                await ctx.reply(`Слово ${word} было успешно добавлено`);
             }
         } catch (err) {
             console.error(err);
-            await ctx.reply(sendLocalizedText(ctx, 'error'))
+            await ctx.reply('Упс, кажется, что-то пошло не так')
         }
     } else {
         if(!userMessage.includes('/')) {
@@ -504,7 +421,7 @@ bot.on('message', async (ctx) => {
 
                 if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
                     if(levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                        await ctx.reply(`${sendLocalizedText(ctx, 'wordWithError')} ${findWord.word}`);
+                        await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
                         isCorrect = true;
                     } else{
                         isCorrect = true;
@@ -516,7 +433,7 @@ bot.on('message', async (ctx) => {
                 }
             }
             if (!isCorrect) {
-                await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
+                await ctx.reply('Неправильно');
             }
             setTimeout(async () => {
                 await startQuiz(ctx);
@@ -565,11 +482,11 @@ async function checkAnswer(ctx, isCorrect) {
     }
 }
 async function handleCorrectAnswer(ctx) {
-    await ctx.reply(sendLocalizedText(ctx, 'correct'));
+    await ctx.reply('Правильно');
 }
 
 async function handleIncorrectAnswer(ctx) {
-    ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
+    ctx.reply('Неправильно');
 }
 
 function shuffleArray(array) {
@@ -615,29 +532,6 @@ function levenshteinDistance(a, b) {
 
     return distanceMatrix[a.length][b.length];
 }
-function sendLocalizedText(ctx, key) {
-    let currentLanguage = getLanguageFromJSON(ctx) || 'en';
-    return localization[currentLanguage][key];
-}
-
-function getLanguageFromJSON(ctx) {
-    if(!`{id}Lang.json`) {
-        return null;
-    }
-    const id = ctx.from.id;
-    const langFileName = `${id}Lang.json`;
-    try {
-        if (fs.existsSync(langFileName)) {
-            const fileData = fs.readFileSync(langFileName, 'utf-8');
-            const langObj = JSON.parse(fileData);
-            return langObj.language;
-        }
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
-}
-
 bot.launch()
 
 process.once('SIGINT', () => bot.stop('SIGINT'))
