@@ -460,7 +460,7 @@ bot.on('message', async (ctx) => {
                 }
                 if (!isCorrect) {
                     if (i === words.length - 1) {
-                        await ctx.reply(`${sendLocalizedText(ctx, 'incorrectWithCorrect')} ${correctWord}`);
+                        await ctx.reply(`${sendLocalizedText(ctx, 'incorrectWithCorrect')} ${currentWord}`);
                     }
                     break;
                 }
