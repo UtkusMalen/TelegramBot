@@ -194,10 +194,10 @@ async function sendPage(ctx, words) {
 
     const buttons = [];
     if (words.length > endIndex) {
-        buttons.push({ text: `${sendLocalizedText(ctx, 'next')}`, callback_data: 'next' });
+        buttons.push({ text: `${sendLocalizedText(ctx, 'nextPage')}`, callback_data: 'next' });
     }
     if (ctx.session.currentPage > 1) {
-        buttons.push({ text: `${sendLocalizedText(ctx, 'prev')}`, callback_data: 'prev' });
+        buttons.push({ text: `${sendLocalizedText(ctx, 'prevPage')}`, callback_data: 'prev' });
     }
 
     await ctx.reply(message, {
