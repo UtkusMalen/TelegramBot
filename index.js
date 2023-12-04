@@ -375,7 +375,7 @@ bot.command('download', async (ctx) => {
         const jsonContent = JSON.stringify(words, null, 2);
         const buffer = Buffer.from(jsonContent, 'utf-8');
 
-        await ctx.replyWithDocument({ source: buffer, filename: 'wordList.json' });
+        await ctx.replyWithDocument({ source: buffer, filename: `${id}.json` });
     } catch (err) {
         console.error(err);
         await ctx.reply(sendLocalizedText(ctx, 'error'));
