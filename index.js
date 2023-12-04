@@ -462,9 +462,10 @@ bot.on('message', async (ctx) => {
                         break;
                     }
                 }
-            }
-            if (!isCorrect) {
-                await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
+                if (!isCorrect) {
+                    await ctx.reply(`${sendLocalizedText(ctx, 'incorrectWithCorrect')} ${findWord.word}`);
+                    break;
+                }
             }
             setTimeout(async () => {
                 await startQuiz(ctx);

@@ -23,6 +23,7 @@
 	"profile": "Your profile:",
 	"quizCount": "for today, you did through /quiz",
 	"words": "words",
+	"incorrectWithCorrect": "Incorrect. Correct word:",
 	"totalWords": "In total added words:",
 	"wordWithError": "Correct, but in the word there is an error. The correct word is ",
 	"languageSet": "The bot language has been set to {{language}}",
