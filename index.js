@@ -432,11 +432,14 @@ bot.on('document', async (ctx) => {
     try {
         const document = ctx.message.document;
 
-        if (document.file_name.endsWith('.json')) {
+        // Check if the uploaded file is a JSON file
+        if (document && document.file_name && document.file_name.endsWith('.json')) {
             const fileLink = await bot.telegram.getFileLink(document.file_id);
-            const fileResponse = await fetch(fileLink);
-            const fileContent = await fileResponse.json();
+            const response = await fetch(fileLink);
+            const arrayBuffer = await response.arrayBuffer();
+            const fileContent = JSON.parse(Buffer.from(arrayBuffer).toString());
 
+            // Write the contents of the uploaded JSON file to the user's specific file
             fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (err) => {
                 if (err) {
                     console.error(err);
@@ -453,7 +456,6 @@ bot.on('document', async (ctx) => {
         ctx.reply(sendLocalizedText(ctx, 'error'));
     }
 });
-
 bot.on('message', async (ctx) => {
     const {id} = ctx.from;
     const fileName = `${id}.json`;
@@ -512,12 +514,9 @@ bot.on('message', async (ctx) => {
                         break;
                     }
                 }
-                if (!isCorrect) {
-                    if (i === words.length - 1) {
-                        await ctx.reply(`${sendLocalizedText(ctx, 'justIncorrect')}`);
-                        break;
-                    }
-                }
+            }
+            if (!isCorrect) {
+                await ctx.reply(sendLocalizedText(ctx, 'justIncorrect'));
             }
             setTimeout(async () => {
                 await startQuiz(ctx);
