@@ -356,7 +356,9 @@ bot.on('document', async (ctx) => {
             const response = await fetch(fileLink);
             const arrayBuffer = await response.arrayBuffer();
             const fileContent = JSON.parse(Buffer.from(arrayBuffer).toString());
-
+            if (fs.existsSync(fileName)) {
+                fs.unlinkSync(fileName);
+            }
             fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (err) => {
                 if (err) {
                     console.error(err);
@@ -374,20 +376,25 @@ bot.on('document', async (ctx) => {
     }
 });
 bot.on('message', async (ctx) => {
-    const {id} = ctx.from;
+    const { id } = ctx.from;
     const fileName = `${id}.json`;
     const userMessage = ctx.message.text;
+
     if (userMessage.includes("-")) {
         const [word, translation] = userMessage.split('-');
-        const data = {word: word.trim(), translation: translation.trim(), count: 1};
-
-        try {
-            const fileData = await fs.promises.readFile(fileName, 'utf-8');
-            const words = JSON.parse(fileData);
+        const data = { word: word.trim(), translation: translation.trim(), count: 1 };
+        try{
+            let words = [];
+            if (fs.existsSync(fileName)) {
+                const fileData = await fs.promises.readFile(fileName, 'utf-8');
+                words = JSON.parse(fileData);
+            }
             let wordFound = false;
-
             for (let i = 0; i < words.length; i++) {
-                if (words[i].word.trim() === word.trim() && words[i].translation.trim() === translation.trim()) {
+                if (
+                    words[i].word.trim() === word.trim() &&
+                    words[i].translation.trim() === translation.trim()
+                ) {
                     wordFound = true;
                     await ctx.reply(`${word} уже существует в списке слов`);
                     break;
@@ -400,7 +407,7 @@ bot.on('message', async (ctx) => {
             }
         } catch (err) {
             console.error(err);
-            await ctx.reply('Упс, кажется, что-то пошло не так')
+            await ctx.reply('Упс, кажется, что-то пошло не так');
         }
     } else {
         if(!userMessage.includes('/')) {
@@ -433,7 +440,7 @@ bot.on('message', async (ctx) => {
                 }
             }
             if (!isCorrect) {
-                await ctx.reply('Неправильно');
+                await ctx.reply(`Неправильно. Правильное слово: ${currentWord}`);
             }
             setTimeout(async () => {
                 await startQuiz(ctx);
