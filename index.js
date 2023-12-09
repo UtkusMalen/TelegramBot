@@ -229,11 +229,19 @@ async function startQuiz(ctx) {
         let randomWord, isGuessTranslation = false
         if(randomChance < 0.3 && wordIfLess.length > 0) {
             const randomWord = wordIfLess[Math.floor(Math.random() * wordIfLess.length)];
-            await ctx.reply(`Напишите перевод: ${randomWord.translation}`, {
+            const wordLength = randomWord.word.length;
+            const maskedWord = randomWord.word[0] + "_".repeat(wordLength - 2) + randomWord.word[wordLength - 1];
+            await ctx.reply(`Напишите правильно: ${maskedWord} - ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
             return;
-        } else if(randomChance < 0.6) {
+        } else if (randomChance < 0.3) {
+            const randomWord = getRandomWord(words);
+            await ctx.reply(`Напишите перевод: ${randomWord.translation}`, {
+                reply_markup: {force_reply: true}
+            });
+        }
+        else if(randomChance < 0.6) {
             isGuessTranslation = false;
             randomWord = getRandomWord(words);
         } else {
@@ -277,6 +285,12 @@ async function startQuiz(ctx) {
         await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
             reply_markup: Markup.inlineKeyboard(limitedButtons, { columns: 2 }),
         });
+        for(let i = 0; i < words.length; i++) {
+            if(words[i].word === randomWord.word && words[i].translation === correctAnswer) {
+                words[i].count++;
+                break;
+            }
+        }
     } catch (error) {
         console.error(error);
         ctx.reply('Список пуст');
@@ -418,36 +432,42 @@ bot.on('message', async (ctx) => {
             }
         } else {
             if (!userMessage.includes('/')) {
-                const fileData = await fs.promises.readFile(fileName, 'utf-8');
-                const words = JSON.parse(fileData);
-                const userWord = userMessage.trim().toLowerCase();
-                let isCorrect = false;
-                const MAX_LEVENSHTEIN_DISTANCE = 1;
-                for (let i = 0; i < words.length; i++) {
-                    const findWord = words[i];
-                    const wordToLower = findWord.word.trim().toLowerCase();
-                    const translationToLower = findWord.translation.trim().toLowerCase();
-                    const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
-                    const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
-                    if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
-                        if (levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                            await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
-                            isCorrect = true;
-                        } else {
-                            isCorrect = true;
-                            await handleCorrectAnswer(ctx);
-                            findWord.count++;
-                            await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                            break;
+                try {
+                    const fileData = await fs.promises.readFile(fileName, 'utf-8');
+                    const words = JSON.parse(fileData);
+                    const userWord = userMessage.trim().toLowerCase();
+                    let isCorrect = false;
+                    const MAX_LEVENSHTEIN_DISTANCE = 1;
+                    for (let i = 0; i < words.length; i++) {
+                        const findWord = words[i];
+                        const wordToLower = findWord.word.trim().toLowerCase();
+                        const translationToLower = findWord.translation.trim().toLowerCase();
+                        const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
+                        const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
+                        if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
+                            if (levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
+                                await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
+                                isCorrect = true;
+                            } else {
+                                isCorrect = true;
+                                await handleCorrectAnswer(ctx);
+                                findWord.count++;
+                                await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                                break;
+                            }
                         }
                     }
                     if (!isCorrect) {
                         await ctx.reply(`Неправильно! Попробуйте ещё раз и, возможно, у вас получится`);
-                        break;
                     }
+                    await setTimeout(async () => {
+                        await startQuiz(ctx);
+                    }, 30);
+                } catch (err) {
+                    console.error(err);
+                    await ctx.reply('Упс, кажется, что-то пошло не так');
                 }
             }
-            await delayStartQuiz(ctx);
         }
     }
 });
@@ -482,19 +502,26 @@ async function checkAnswer(ctx, isCorrect) {
             await handleIncorrectAnswer(ctx);
         }
         await ctx.answerCbQuery();
+        await delayStartQuiz(ctx);
 
     } catch (err) {
         console.error(err);
-    } finally {
-        await delayStartQuiz(ctx);
     }
 }
 async function handleCorrectAnswer(ctx) {
-    await ctx.reply('Правильно');
+    try {
+        await ctx.reply('Правильно');
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 async function handleIncorrectAnswer(ctx) {
-    ctx.reply('Неправильно');
+    try {
+        ctx.reply('Неправильно');
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 function shuffleArray(array) {
@@ -542,9 +569,13 @@ function levenshteinDistance(a, b) {
 }
 
 async function delayStartQuiz(ctx) {
-    setTimeout(async () => {
-        await startQuiz(ctx);
-    }, 500);
+    try {
+        setTimeout( () => {
+            startQuiz(ctx);
+        }, 300);
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 
