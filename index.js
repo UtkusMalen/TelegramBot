@@ -184,7 +184,7 @@ bot.command('delete' , async (ctx) => {
 })
 
 bot.command('quiz', async (ctx) => {
-    await startQuiz(ctx);
+    await delayStartQuiz(ctx);
 });
 async function startQuiz(ctx) {
     const { id } = ctx.from;
@@ -197,6 +197,10 @@ async function startQuiz(ctx) {
             await ctx.reply('Список пуст');
             return;
         }
+
+        const wordToGuess = words.filter(word => word.count >=3);
+        const wordIfLess = words.filter(word => word.count < 3);
+
         let totalData = [];
         if (fs.existsSync(totalFileName)) {
             const totalFileData = await fs.promises.readFile(totalFileName, 'utf-8');
@@ -223,8 +227,8 @@ async function startQuiz(ctx) {
 
         const randomChance = Math.random();
         let randomWord, isGuessTranslation = false
-        if(randomChance < 0.3) {
-            randomWord = getRandomWord(words);
+        if(randomChance < 0.3 && wordIfLess.length > 0) {
+            const randomWord = wordIfLess[Math.floor(Math.random() * wordIfLess.length)];
             await ctx.reply(`Напишите перевод: ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
@@ -234,7 +238,7 @@ async function startQuiz(ctx) {
             randomWord = getRandomWord(words);
         } else {
             isGuessTranslation = true;
-            randomWord = getRandomWord(words);
+            randomWord = getRandomWord(wordToGuess);
         }
         const correctWords = words.filter(word => {
             return isGuessTranslation ? word.translation === randomWord.translation : word.word === randomWord.word;
@@ -375,76 +379,75 @@ bot.on('document', async (ctx) => {
         await ctx.reply('Упс, кажется, что-то пошло не так');
     }
 });
+
 bot.on('message', async (ctx) => {
+    const {id: senderId} = ctx.from;
+    const botId = ctx.botInfo.id;
     const { id } = ctx.from;
     const fileName = `${id}.json`;
     const userMessage = ctx.message.text;
-
-    if (userMessage.includes("-")) {
-        const [word, translation] = userMessage.split('-');
-        const data = { word: word.trim(), translation: translation.trim(), count: 1 };
-        try{
-            let words = [];
-            if (fs.existsSync(fileName)) {
-                const fileData = await fs.promises.readFile(fileName, 'utf-8');
-                words = JSON.parse(fileData);
-            }
-            let wordFound = false;
-            for (let i = 0; i < words.length; i++) {
-                if (
-                    words[i].word.trim() === word.trim() &&
-                    words[i].translation.trim() === translation.trim()
-                ) {
-                    wordFound = true;
-                    await ctx.reply(`${word} уже существует в списке слов`);
-                    break;
+    if(senderId !== botId) {
+        if (userMessage.includes("-")) {
+            const [word, translation] = userMessage.split('-');
+            const data = {word: word.trim(), translation: translation.trim(), count: 1};
+            try {
+                let words = [];
+                if (fs.existsSync(fileName)) {
+                    const fileData = await fs.promises.readFile(fileName, 'utf-8');
+                    words = JSON.parse(fileData);
                 }
+                let wordFound = false;
+                for (let i = 0; i < words.length; i++) {
+                    if (
+                        words[i].word.trim() === word.trim() &&
+                        words[i].translation.trim() === translation.trim()
+                    ) {
+                        wordFound = true;
+                        await ctx.reply(`${word} уже существует в списке слов`);
+                        break;
+                    }
+                }
+                if (!wordFound) {
+                    words.push(data);
+                    await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                    await ctx.reply(`Слово ${word} было успешно добавлено`);
+                }
+            } catch (err) {
+                console.error(err);
+                await ctx.reply('Упс, кажется, что-то пошло не так');
             }
-            if (!wordFound) {
-                words.push(data);
-                await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                await ctx.reply(`Слово ${word} было успешно добавлено`);
-            }
-        } catch (err) {
-            console.error(err);
-            await ctx.reply('Упс, кажется, что-то пошло не так');
-        }
-    } else {
-        if(!userMessage.includes('/')) {
-            const fileData = await fs.promises.readFile(fileName, 'utf-8');
-            const words = JSON.parse(fileData);
-            const userWord = userMessage.trim().toLowerCase();
-            const randomWord = getRandomWord(words);
-            const currentWord = randomWord.word.trim().toLowerCase();
-            let isCorrect = false;
-            const MAX_LEVENSHTEIN_DISTANCE = 1;
-
-            for (let i = 0; i < words.length; i++) {
-                const findWord = words[i];
-                const wordToLower = findWord.word.trim().toLowerCase();
-                const translationToLower = findWord.translation.trim().toLowerCase();
-                const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
-                const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
-
-                if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
-                    if(levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                        await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
-                        isCorrect = true;
-                    } else{
-                        isCorrect = true;
-                        await handleCorrectAnswer(ctx);
-                        currentWord.count++;
-                        await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+        } else {
+            if (!userMessage.includes('/')) {
+                const fileData = await fs.promises.readFile(fileName, 'utf-8');
+                const words = JSON.parse(fileData);
+                const userWord = userMessage.trim().toLowerCase();
+                let isCorrect = false;
+                const MAX_LEVENSHTEIN_DISTANCE = 1;
+                for (let i = 0; i < words.length; i++) {
+                    const findWord = words[i];
+                    const wordToLower = findWord.word.trim().toLowerCase();
+                    const translationToLower = findWord.translation.trim().toLowerCase();
+                    const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
+                    const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
+                    if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
+                        if (levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
+                            await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
+                            isCorrect = true;
+                        } else {
+                            isCorrect = true;
+                            await handleCorrectAnswer(ctx);
+                            findWord.count++;
+                            await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                            break;
+                        }
+                    }
+                    if (!isCorrect) {
+                        await ctx.reply(`Неправильно! Попробуйте ещё раз и, возможно, у вас получится`);
                         break;
                     }
                 }
             }
-            if (!isCorrect) {
-                await ctx.reply(`Неправильно. Правильное слово: ${currentWord}`);
-            }
-            setTimeout(async () => {
-                await startQuiz(ctx);
-            }, 100);
+            await delayStartQuiz(ctx);
         }
     }
 });
@@ -478,14 +481,12 @@ async function checkAnswer(ctx, isCorrect) {
         } else {
             await handleIncorrectAnswer(ctx);
         }
+        await ctx.answerCbQuery();
 
     } catch (err) {
         console.error(err);
     } finally {
-        await ctx.answerCbQuery();
-        setTimeout(async () => {
-            await startQuiz(ctx);
-        },500);
+        await delayStartQuiz(ctx);
     }
 }
 async function handleCorrectAnswer(ctx) {
@@ -539,6 +540,15 @@ function levenshteinDistance(a, b) {
 
     return distanceMatrix[a.length][b.length];
 }
+
+async function delayStartQuiz(ctx) {
+    setTimeout(async () => {
+        await startQuiz(ctx);
+    }, 500);
+}
+
+
+
 bot.launch()
 
 process.once('SIGINT', () => bot.stop('SIGINT'))
