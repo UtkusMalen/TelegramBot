@@ -249,7 +249,7 @@ async function startQuiz(ctx) {
             randomWord = getRandomWord(wordToGuess);
         }
         const correctWords = words.filter(word => {
-            return isGuessTranslation ? word.translation === randomWord.translation : word.word === randomWord.word;
+            return isGuessTranslation ? (randomWord && word.translation === randomWord.translation) : (randomWord && word.word === randomWord.word);
         });
 
         const correctAnswer = correctWords.map(word => isGuessTranslation ? word.word : word.translation)[0];
@@ -260,7 +260,7 @@ async function startQuiz(ctx) {
         });
         const shuffledOptions = shuffleArray(otherOptions).slice(0, 3);
         for(let i = 0; i < words.length; i++) {
-            if(words[i].word === randomWord.word && words[i].translation === correctAnswer) {
+            if(randomWord && words[i] && words[i].word === randomWord.word && words[i].translation === correctAnswer) {
                 words[i].count++;
                 break;
             }
@@ -293,7 +293,6 @@ async function startQuiz(ctx) {
         }
     } catch (error) {
         console.error(error);
-        ctx.reply('Список пуст');
     }
 }
 
@@ -438,29 +437,41 @@ bot.on('message', async (ctx) => {
                     const userWord = userMessage.trim().toLowerCase();
                     let isCorrect = false;
                     const MAX_LEVENSHTEIN_DISTANCE = 1;
+                    let foundExactMatch = false;
                     for (let i = 0; i < words.length; i++) {
                         const findWord = words[i];
                         const wordToLower = findWord.word.trim().toLowerCase();
                         const translationToLower = findWord.translation.trim().toLowerCase();
-                        const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
-                        const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
-                        if (wordToLower === userWord || translationToLower === userWord || levenshteinDistance(wordToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE || levenshteinDistance(translationToLower, userWord) <= MAX_LEVENSHTEIN_DISTANCE) {
-                            if (levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                                await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
-                                isCorrect = true;
-                            } else {
-                                isCorrect = true;
-                                await handleCorrectAnswer(ctx);
-                                findWord.count++;
-                                await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                                break;
+                        if (wordToLower === userWord || translationToLower === userWord) {
+                            await handleCorrectAnswer(ctx);
+                            findWord.count++;
+                            await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
+                            foundExactMatch = true;
+                            isCorrect = true;
+                            break;
+                        }
+                    }
+                    if (!foundExactMatch) {
+                        for (let i = 0; i < words.length; i++) {
+                            const findWord = words[i];
+                            const wordToLower = findWord.word.trim().toLowerCase();
+                            const translationToLower = findWord.translation.trim().toLowerCase();
+
+                            const levenshteinWordDistance = levenshteinDistance(wordToLower, userWord);
+                            const levenshteinTranslationDistance = levenshteinDistance(translationToLower, userWord);
+
+                            if (levenshteinWordDistance <= MAX_LEVENSHTEIN_DISTANCE || levenshteinTranslationDistance <= MAX_LEVENSHTEIN_DISTANCE) {
+                                if (levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
+                                    await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
+                                    isCorrect = true;
+                                }
                             }
                         }
                     }
                     if (!isCorrect) {
                         await ctx.reply(`Неправильно! Попробуйте ещё раз и, возможно, у вас получится`);
                     }
-                    await setTimeout(async () => {
+                    setTimeout(async () => {
                         await startQuiz(ctx);
                     }, 30);
                 } catch (err) {
