@@ -1,14 +1,30 @@
 # TelegramBot
 Telegram Bot for learning foreign words
 
-Инструкция по установке и запуску:
-1. Распаковываешь папку с ботом в любое удобное место
-2. Запускаешь PowerShell (или любую другую консоль системы) от имени администратора
-3. пишешь "cd *путь к папке с ботом*"
-4. Вводишь эти команды:
+Installation and Launch Instructions:
+
+1. Extract the bot's folder to any convenient location.
+
+
+2. Run PowerShell (or any other system console) as Administrator.
+
+
+3. Type: cd path_to_bot_folder.
+
+
+4. Enter these commands:
+
 npm install -g pkg
+
 npm install
-5. Далее создаешь .env файл в папке с ботом, вписываешь туда BOT_TOKEN=*Твой токен*
-6. Прописываешь npm start
-Бот установлен! 👌
-   
+
+
+
+5. Create a .env file in the bot folder and add the following line:
+BOT_TOKEN=Your_Token.
+
+
+6. Run the command: npm start. The bot is now installed! 👌
+
+
+
