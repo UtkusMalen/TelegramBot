@@ -1,13 +1,13 @@
 const help = `
 
-Для добавления слова в список, необходимо написать *Слово* - *Перевод*
+To add a word to the list, you need to write Word - Translation
 
-/help - помощь
-/start - запустить бота(ОБЯЗАТЕЛЬНО, иначе ничего не будет работать)
-/quiz - квиз перевода слов
-/list - посмотреть список слов
-/delete *Слово - перевод* - удалить слово со списка
-/clear - очистить список слов
+/help - help
+/start - start the bot (REQUIRED, otherwise nothing will work)
+/quiz - word translation quiz
+/list - view the word list
+/delete Word - translation - delete a word from the list
+/clear - clear the word list
 `
 
 module.exports.help = help
