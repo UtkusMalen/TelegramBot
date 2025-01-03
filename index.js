@@ -110,7 +110,7 @@ async function sendPage(ctx, words) {
     const endIndex = ctx.session.currentPage * ITEMS_PER_PAGE;
     const pageWords = words.slice(startIndex, endIndex);
 
-    const message = `Страница ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
+    const message = `Page ${ctx.session.currentPage}/${Math.ceil(words.length / ITEMS_PER_PAGE)}:\n${pageWords.map((word) => `${word.word} - ${word.translation}`).join('\n')}`;
 
     const buttons = [];
     if (words.length > endIndex) {
@@ -315,7 +315,7 @@ bot.command('download', async (ctx) => {
         await ctx.replyWithDocument({ source: buffer, filename: `${id}.json` });
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, что-то пошло не так');
+        await ctx.reply('Oops, something went wrong...');
     }
 });
 
