@@ -18,7 +18,7 @@ bot.start((ctx) => {
             });
         }
     });
-    ctx.reply(ctx.from.first_name + ', Привет! Для того чтобы подробнее узнать о боте, напиши /help');
+    ctx.reply(ctx.from.first_name + ', Hello! To learn more about the bot, type /help');
 });
 
 bot.help((ctx) => {
@@ -35,7 +35,7 @@ bot.command('list', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список пуст');
+            await ctx.reply('The list is empty');
             return;
         }
 
@@ -44,7 +44,7 @@ bot.command('list', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, что-то пошло не так...');
+        await ctx.reply('Oops, something went wrong...');
     }
 });
 
@@ -61,7 +61,7 @@ bot.action('next', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список пуст');
+            await ctx.reply('The list is empty');
             return;
         }
 
@@ -73,7 +73,7 @@ bot.action('next', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, что-то пошло не так...');
+        await ctx.reply('Oops, something went wrong...');
     }
 });
 
@@ -90,7 +90,7 @@ bot.action('prev', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список пуст');
+            await ctx.reply('The list is empty');
             return;
         }
 
@@ -102,7 +102,7 @@ bot.action('prev', async (ctx) => {
 
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, что-то пошло не так...');
+        await ctx.reply('Oops, something went wrong...');
     }
 });
 async function sendPage(ctx, words) {
@@ -114,10 +114,10 @@ async function sendPage(ctx, words) {
 
     const buttons = [];
     if (words.length > endIndex) {
-        buttons.push({ text: `Следующая страница`, callback_data: 'next' });
+        buttons.push({ text: `Next page`, callback_data: 'next' });
     }
     if (ctx.session.currentPage > 1) {
-        buttons.push({ text: `Предыдущая страница`, callback_data: 'prev' });
+        buttons.push({ text: `Previous page`, callback_data: 'prev' });
     }
 
     await ctx.reply(message, {
@@ -140,10 +140,10 @@ bot.command('clear' , async (ctx) => {
                 console.error(err);
             }
         })
-        await ctx.reply('Список слов успешно очищен');
+        await ctx.reply('The word list has been successfully cleared');
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Oops, something went wrong...');
     }
 })
 bot.command('delete' , async (ctx) => {
@@ -169,17 +169,17 @@ bot.command('delete' , async (ctx) => {
             fs.writeFile(fileName, updatedData, (err) => {
                 if (err) {
                     console.error(err);
-                    ctx.reply('Упс, кажется, что-то пошло не так');
+                    ctx.reply('Oops, something went wrong');
                     return;
                 }
-                ctx.reply('Слово успешно удалено');
+                ctx.reply('The word has been successfully deleted');
             })
         } else {
-            await ctx.reply('Такого слова не существует');
+            await ctx.reply('Such a word does not exist');
         }
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Oops, something went wrong');
     }
 })
 
@@ -231,13 +231,13 @@ async function startQuiz(ctx) {
             const randomWord = wordIfLess[Math.floor(Math.random() * wordIfLess.length)];
             const wordLength = randomWord.word.length;
             const maskedWord = randomWord.word[0] + "_".repeat(wordLength - 2) + randomWord.word[wordLength - 1];
-            await ctx.reply(`Напишите правильно: ${maskedWord} - ${randomWord.translation}`, {
+            await ctx.reply(`Write correctly: ${maskedWord} - ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
             return;
         } else if (randomChance < 0.3) {
             const randomWord = getRandomWord(words);
-            await ctx.reply(`Напишите перевод: ${randomWord.translation}`, {
+            await ctx.reply(`Write translation: ${randomWord.translation}`, {
                 reply_markup: {force_reply: true}
             });
         }
@@ -281,8 +281,8 @@ async function startQuiz(ctx) {
         shuffleArray(buttons);
         const maxButtons = 4;
         const limitedButtons = buttons.slice(0, maxButtons);
-        const questionType = isGuessTranslation ? `слово` : `перевод`;
-        await ctx.reply(`Выберите ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
+        const questionType = isGuessTranslation ? `word` : `translation`;
+        await ctx.reply(`Choose ${questionType} ${randomWord[isGuessTranslation ? 'translation' : 'word']}`, {
             reply_markup: Markup.inlineKeyboard(limitedButtons, { columns: 2 }),
         });
         for(let i = 0; i < words.length; i++) {
@@ -305,7 +305,7 @@ bot.command('download', async (ctx) => {
         const words = JSON.parse(fileData);
 
         if (words.length === 0) {
-            await ctx.reply('Список слов пуст');
+            await ctx.reply('Word list is empty');
             return;
         }
 
@@ -344,7 +344,7 @@ bot.command('profile', async (ctx) => {
             if(totalData[i].date === currentDate) {
                 totalData[i].totalQuizCount = totalData[i].totalQuizCount || 0;
                 await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
-                await ctx.reply(`Ваш профиль:\n\nКоличество сделанных через /quiz слов: ${totalData[i].totalQuizCount}\nОбщее количество добавленных слов: ${wordsCount}`);
+                await ctx.reply(`Your profile:\n\nThe number of words made through /quiz: ${totalData[i].totalQuizCount}\nTotal count of added words: ${wordsCount}`);
                 foundDate = true;
                 break;
             }
@@ -353,11 +353,11 @@ bot.command('profile', async (ctx) => {
         if(!foundDate) {
             totalData.push({ date: currentDate, totalQuizCount: 0 });
             await fs.promises.writeFile(totalFileName, JSON.stringify(totalData, null, 2), 'utf-8');
-            await ctx.reply(`Ваш профиль:\n\nКоличество сделанных через /quiz слов: 0\nОбщее количество добавленных слов: ${wordsCount}`);
+            await ctx.reply(`Your profile:\n\nThe number of words made through /quiz: 0\nTotal count of added words: ${wordsCount}`);
         }
     } catch (error) {
         console.error(error);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Oops, something went wrong');
     }
 });
 
@@ -379,17 +379,17 @@ bot.on('document', async (ctx) => {
             fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (err) => {
                 if (err) {
                     console.error(err);
-                    ctx.reply('Упс, кажется, что-то пошло не так');
+                    ctx.reply('Oops, something went wrong');
                 } else {
-                    ctx.reply("Файл успешно загружен");
+                    ctx.reply("File successfully uploaded");
                 }
             });
         } else {
-            await ctx.reply('Вы прислали файл не с расширением .JSON');
+            await ctx.reply('you sent a file with an extension other than .JSON');
         }
     } catch (err) {
         console.error(err);
-        await ctx.reply('Упс, кажется, что-то пошло не так');
+        await ctx.reply('Oops, something went wrong');
     }
 });
 
@@ -416,18 +416,18 @@ bot.on('message', async (ctx) => {
                         words[i].translation.trim() === translation.trim()
                     ) {
                         wordFound = true;
-                        await ctx.reply(`${word} уже существует в списке слов`);
+                        await ctx.reply(`${word} is already in word list`);
                         break;
                     }
                 }
                 if (!wordFound) {
                     words.push(data);
                     await fs.promises.writeFile(fileName, JSON.stringify(words, null, 2));
-                    await ctx.reply(`Слово ${word} было успешно добавлено`);
+                    await ctx.reply(`Word ${word} was successfully added`);
                 }
             } catch (err) {
                 console.error(err);
-                await ctx.reply('Упс, кажется, что-то пошло не так');
+                await ctx.reply('Oops, something went wrong');
             }
         } else {
             if (!userMessage.includes('/')) {
@@ -462,21 +462,21 @@ bot.on('message', async (ctx) => {
 
                             if (levenshteinWordDistance <= MAX_LEVENSHTEIN_DISTANCE || levenshteinTranslationDistance <= MAX_LEVENSHTEIN_DISTANCE) {
                                 if (levenshteinWordDistance === 1 || levenshteinTranslationDistance === 1) {
-                                    await ctx.reply(`Правильно, но в слове допущена ошибка. Правильное слово: ${findWord.word}`);
+                                    await ctx.reply(`Correct, but there is a misstake in the word. Correct word: ${findWord.word}`);
                                     isCorrect = true;
                                 }
                             }
                         }
                     }
                     if (!isCorrect) {
-                        await ctx.reply(`Неправильно! Попробуйте ещё раз и, возможно, у вас получится`);
+                        await ctx.reply(`Incorrect, try again`);
                     }
                     setTimeout(async () => {
                         await startQuiz(ctx);
                     }, 30);
                 } catch (err) {
                     console.error(err);
-                    await ctx.reply('Упс, кажется, что-то пошло не так');
+                    await ctx.reply('Oops, something went wrong');
                 }
             }
         }
@@ -521,7 +521,7 @@ async function checkAnswer(ctx, isCorrect) {
 }
 async function handleCorrectAnswer(ctx) {
     try {
-        await ctx.reply('Правильно');
+        await ctx.reply('Correct!');
     } catch (err) {
         console.error(err);
     }
@@ -529,7 +529,7 @@ async function handleCorrectAnswer(ctx) {
 
 async function handleIncorrectAnswer(ctx) {
     try {
-        ctx.reply('Неправильно');
+        ctx.reply('Incorrect');
     } catch (err) {
         console.error(err);
     }
